@@ -130,70 +130,74 @@
                         </table>
                     </div>
                 </div>
+
             <?php elseif ($action === 'buat_lokasi'): ?>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                <div class="lg:col-span-2 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                    <h2 class="text-lg font-bold text-gray-800 border-b pb-3 mb-4 flex items-center space-x-2">
-                    <span>Registrasi Cabang</span>
-                    </h2>
+                    <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm h-fit">
+                        <h2 class="text-lg font-bold text-gray-800 border-b pb-3 mb-4 flex items-center space-x-2">
+                            <span>📍</span> <span>Registrasi Cabang</span>
+                        </h2>
 
-                    <form action="index.php?page=lokasi_proses_tambah" method="POST" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-600 mb-1">Nama Cabang</label>
-                            <input type="text" name="nama_lokasi" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-600 mb-1">Kota</label>
-                            <input type="text" name="kota" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-600 mb-1">Alamat Lengkap</label>
-                            <textarea name="alamat" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500"></textarea>
-                        </div>
-                        
-                        <button type="submit" class="w-full py-2.5 bg-[#6347C7] hover:bg-[#5239a7] text-white text-sm font-bold rounded-xl shadow-sm transition">
-                            Simpan Cabang Baru
-                        </button>
-                    </form>
-                </div>
+                        <form action="index.php?page=lokasi_proses_tambah" method="POST" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Nama Cabang</label>
+                                <input type="text" name="nama_lokasi" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Kota</label>
+                                <input type="text" name="kota" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Alamat Lengkap</label>
+                                <textarea name="alamat" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500" rows="3"></textarea>
+                            </div>
+                            
+                            <button type="submit" class="w-full py-2.5 bg-[#6347C7] hover:bg-[#5239a7] text-white text-sm font-bold rounded-xl shadow-sm transition">
+                                Simpan Cabang Baru
+                            </button>
+                        </form>
+                    </div>
 
-                <div class="lg:col-span-2 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                    <h2 class="text-lg font-bold text-gray-800 border-b pb-3 mb-4 flex items-center space-x-2">
-                        <span>Daftar Cabang Terdaftar</span>
-                    </h2>
+                    <div class="lg:col-span-2 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+                        <h2 class="text-lg font-bold text-gray-800 border-b pb-3 mb-4 flex items-center space-x-2">
+                            <span>📋</span> <span>Daftar Cabang Terdaftar</span>
+                        </h2>
 
-                    <div class="overflow-x-auto rounded-xl border border-gray-100">
-                        <table class="w-full text-sm text-left text-gray-500">
-                            <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
-                                <tr>
-                                    <th class="px-4 py-3">Nama Cabang</th>
-                                    <th class="px-4 py-3">Kota</th>
-                                    <th class="px-4 py-3">Alamat Lengkap</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100 bg-white">
-                                <?php if (!empty($daftarLokasi)): ?>
-                                    <?php foreach ($daftarLokasi as $lokasi): ?>
-                                        <tr class="hover:bg-gray-50">
-                                            <td class="px-4 py-4 font-bold text-gray-900">
-                                                <?= htmlspecialchars($lokasi['nama_lokasi']); ?>
-                                            </td>
-                                            <td class="px-4 py-4">
-                                                <?= htmlspecialchars($lokasi['kota']); ?>
-                                            </td>
-                                            <td class="px-4 py-4 text-xs">
-                                                <?= htmlspecialchars($lokasi['alamat']); ?>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php else: ?>
+                        <div class="overflow-x-auto rounded-xl border border-gray-100">
+                            <table class="w-full text-sm text-left text-gray-500">
+                                <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
                                     <tr>
-                                        <td colspan="3" class="px-4 py-4 text-center text-gray-400 text-xs">Belum ada cabang yang terdaftar.</td>
+                                        <th class="px-4 py-3">Nama Cabang</th>
+                                        <th class="px-4 py-3">Kota</th>
+                                        <th class="px-4 py-3">Alamat Lengkap</th>
                                     </tr>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 bg-white">
+                                    <?php if (!empty($daftarLokasi)): ?>
+                                        <?php foreach ($daftarLokasi as $lokasi): ?>
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-4 py-4 font-bold text-gray-900">
+                                                    <?= htmlspecialchars($lokasi['nama_lokasi']); ?>
+                                                </td>
+                                                <td class="px-4 py-4">
+                                                    <?= htmlspecialchars($lokasi['kota']); ?>
+                                                </td>
+                                                <td class="px-4 py-4 text-xs">
+                                                    <?= htmlspecialchars($lokasi['alamat']); ?>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr>
+                                            <td colspan="3" class="px-4 py-4 text-center text-gray-400 text-xs">Belum ada cabang yang terdaftar.</td>
+                                        </tr>
+                                    <?php endif; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
 
 
             <?php elseif ($action === 'buat_akun'): ?>

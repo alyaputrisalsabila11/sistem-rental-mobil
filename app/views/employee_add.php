@@ -27,6 +27,18 @@
             </div>
 
             <div>
+                <label class="block text-xs font-bold text-gray-600 mb-1">Cabang / Lokasi</label>
+                    <select name="lokasi_id" required class="w-full border p-2 rounded-lg text-sm bg-white focus:outline-indigo-500">
+                    <option value="">-- Pilih Cabang --</option>
+                        <?php if (!empty($daftarLokasi)): ?>
+                        <?php foreach ($daftarLokasi as $lokasi): ?>
+                            <option value="<?= htmlspecialchars($lokasi['id_lokasi']); ?>"><?= htmlspecialchars($lokasi['nama_lokasi'] . ' - ' . $lokasi['kota']); ?></option>
+                        <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
+            </div>
+
+            <div>
                 <label class="block text-gray-700 font-semibold mb-1">No. Telepon / WhatsApp</label>
                 <input type="text" name="no_telp" class="w-full border p-2 rounded focus:outline-blue-500">
             </div>
