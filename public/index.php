@@ -111,6 +111,18 @@ switch ($page) {
     case 'lokasi_tambah':
         (new LokasiController())->create();
         break;
+    case 'lokasi_proses_edit':
+        (new LokasiController())->update();
+        break;
+    case 'lokasi_hapus':
+        (new LokasiController())->delete();
+        break;
+    case 'karyawan_proses_edit':
+        (new EmployeeController())->update();
+        break;
+    case 'karyawan_hapus':
+        (new EmployeeController())->delete();
+        break;
 
     default:
         include __DIR__ . '/../app/views/landing.php';

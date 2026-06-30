@@ -171,6 +171,7 @@
                                         <th class="px-4 py-3">Nama Cabang</th>
                                         <th class="px-4 py-3">Kota</th>
                                         <th class="px-4 py-3">Alamat Lengkap</th>
+                                        <th class="px-4 py-3 text-center">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100 bg-white">
@@ -186,6 +187,18 @@
                                                 <td class="px-4 py-4 text-xs">
                                                     <?= htmlspecialchars($lokasi['alamat']); ?>
                                                 </td>
+                                                <td class="px-4 py-4 text-sm">
+                                                    <a href="index.php?page=manager_dashboard&action=edit_cabang&id=<?= $lokasi['id_lokasi']; ?>" 
+                                                    class="inline-block px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 mr-2 text-xs">
+                                                    Edit
+                                                    </a>
+                                                    
+                                                    <a href="index.php?page=lokasi_hapus&id=<?= $lokasi['id_lokasi']; ?>" 
+                                                    onclick="return confirm('Apakah Anda yakin ingin menghapus cabang ini?');" 
+                                                    class="inline-block px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs">
+                                                    Hapus
+                                                    </a>
+                                                </td>
                                             </tr>
                                         <?php endforeach; ?>
                                     <?php else: ?>
@@ -199,8 +212,111 @@
                     </div>
                 </div>
 
+            <?php elseif ($action === 'edit_cabang' && $lokasiEdit): ?>
+                <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm max-w-2xl mx-auto mt-8">
+                    <h2 class="text-lg font-bold text-gray-800 border-b pb-3 mb-4 flex items-center space-x-2">
+                        <span>✏️</span> <span>Edit Data Cabang</span>
+                    </h2>
 
+                    <form action="index.php?page=lokasi_proses_edit" method="POST" class="space-y-4">
+                        <input type="hidden" name="id_lokasi" value="<?= htmlspecialchars($lokasiEdit['id_lokasi']); ?>">
+                        
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Nama Cabang</label>
+                            <input type="text" name="nama_lokasi" value="<?= htmlspecialchars($lokasiEdit['nama_lokasi']); ?>" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Kota</label>
+                            <input type="text" name="kota" value="<?= htmlspecialchars($lokasiEdit['kota']); ?>" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Alamat Lengkap</label>
+                            <textarea name="alamat" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500" rows="3"><?= htmlspecialchars($lokasiEdit['alamat']); ?></textarea>
+                        </div>
+                        
+                        <div class="flex space-x-3 pt-4 border-t mt-4">
+                            <button type="submit" class="flex-1 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-bold rounded-xl shadow-sm transition">
+                                Simpan Perubahan
+                            </button>
+                            <a href="index.php?page=manager_dashboard&action=buat_lokasi" class="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-bold rounded-xl shadow-sm transition flex items-center justify-center">
+                                Batal
+                            </a>
+                        </div>
+                    </form>
+                </div>
+                <?php elseif ($action === 'edit_karyawan' && $karyawanEdit): ?>
+                <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm max-w-2xl mx-auto mt-8">
+                    <h2 class="text-lg font-bold text-gray-800 border-b pb-3 mb-4 flex items-center space-x-2">
+                        <span>✏️</span> <span>Edit Data Akun Karyawan</span>
+                    </h2>
+
+                    <form action="index.php?page=karyawan_proses_edit" method="POST" class="space-y-4">
+                        <input type="hidden" name="id_karyawan" value="<?= htmlspecialchars($karyawanEdit['id_karyawan']); ?>">
+                        
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Nama Lengkap Karyawan</label>
+                            <input type="text" name="nama_karyawan" value="<?= htmlspecialchars($karyawanEdit['nama_karyawan']); ?>" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Email</label>
+                            <input type="email" name="email" value="<?= htmlspecialchars($karyawanEdit['email']); ?>" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">No. Telp / WhatsApp</label>
+                            <input type="text" name="no_telp" value="<?= htmlspecialchars($karyawanEdit['no_telp']); ?>" class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Password Baru (Kosongkan jika tidak diganti)</label>
+                            <input type="password" name="password" class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500" placeholder="Masukkan password baru jika ingin diubah">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Role / Jabatan</label>
+                                <select name="role" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                                    <option value="Manager" <?= $karyawanEdit['role'] === 'Manager' ? 'selected' : ''; ?>>Manager</option>
+                                    <option value="Staff Admin" <?= $karyawanEdit['role'] === 'Staff Admin' ? 'selected' : ''; ?>>Staff Admin</option>
+                                    <option value="Staff Lapangan" <?= $karyawanEdit['role'] === 'Staff Lapangan' ? 'selected' : ''; ?>>Staff Lapangan</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Status Karyawan</label>
+                                <select name="status_karyawan" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                                    <option value="Aktif" <?= $karyawanEdit['status_karyawan'] === 'Aktif' ? 'selected' : ''; ?>>Aktif</option>
+                                    <option value="Nonaktif" <?= $karyawanEdit['status_karyawan'] === 'Nonaktif' ? 'selected' : ''; ?>>Nonaktif</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Penempatan Cabang</label>
+                            <select name="id_lokasi" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                                <option value="">-- Pilih Cabang --</option>
+                                <?php foreach ($daftarLokasi as $lokasi): ?>
+                                    <option value="<?= $lokasi['id_lokasi']; ?>" <?= $karyawanEdit['id_lokasi'] == $lokasi['id_lokasi'] ? 'selected' : ''; ?>>
+                                        <?= htmlspecialchars($lokasi['nama_lokasi']); ?> (<?= htmlspecialchars($lokasi['kota']); ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        
+                        <div class="flex space-x-3 pt-4 border-t mt-4">
+                            <button type="submit" class="flex-1 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-bold rounded-xl shadow-sm transition">
+                                Simpan Perubahan
+                            </button>
+                            <a href="index.php?page=manager_dashboard&action=buat_akun" class="px-6 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-bold rounded-xl shadow-sm transition flex items-center justify-center">
+                                Batal
+                            </a>
+                        </div>
+                    </form>
+                </div>
+                
             <?php elseif ($action === 'buat_akun'): ?>
+                
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     
                     <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm h-fit">
@@ -219,7 +335,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-600 mb-1">Cabang / Lokasi</label>
-                                <select name="lokasi_id" required class="w-full border p-2 rounded-lg text-sm bg-white focus:outline-indigo-500">
+                                <select name="id_lokasi" required class="w-full border p-2 rounded-lg text-sm bg-white focus:outline-indigo-500">
                                     <option value="">-- Pilih Cabang --</option>
                                     <?php if (!empty($daftarLokasi)): ?>
                                     <?php foreach ($daftarLokasi as $lokasi): ?>
@@ -267,6 +383,7 @@
                                         <th class="px-4 py-3">Cabang</th>
                                         <th class="px-4 py-3">Jabatan</th>
                                         <th class="px-4 py-3 text-center">Status</th>
+                                        <th class="px-4 py-3 text-center">Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100 bg-white">
@@ -280,6 +397,9 @@
                                                     <?= htmlspecialchars($karyawan['email']); ?>
                                                 </td>
                                                 <td class="px-4 py-4">
+                                                    <?= htmlspecialchars($karyawan['nama_lokasi'] ?? 'Belum Ditentukan'); ?>
+                                                </td>
+                                                <td class="px-4 py-4">
                                                     <span class="px-2 py-0.5 text-xs font-semibold bg-purple-50 text-purple-700 rounded border border-purple-200">
                                                         <?= htmlspecialchars($karyawan['role']); ?>
                                                     </span>
@@ -289,11 +409,25 @@
                                                         ● <?= htmlspecialchars($karyawan['status_karyawan'] ?? 'Aktif'); ?>
                                                     </span>
                                                 </td>
+                                                <td class="px-4 py-4 text-center text-xs space-x-1">
+                                                    <a href="index.php?page=manager_dashboard&action=edit_karyawan&id=<?= $karyawan['id_karyawan']; ?>" 
+                                                    class="inline-block px-2 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 font-bold shadow-sm">
+                                                    Edit
+                                                    </a>
+
+                                                    <a href="index.php?page=karyawan_hapus&id=<?= $karyawan['id_karyawan']; ?>" 
+                                                    onclick="return confirm('Apakah Anda yakin ingin menghapus karyawan ini?');" 
+                                                    class="inline-block px-2 py-1 bg-red-600 text-white rounded hover:bg-red-700 font-bold shadow-sm">
+                                                    Hapus
+                                                    </a>
+                                                </td>
                                             </tr>
                                         <?php endforeach; ?>
+                                    
+                                        
                                     <?php else: ?>
                                         <tr>
-                                            <td colspan="4" class="px-4 py-4 text-center text-gray-400 text-xs">Belum ada karyawan yang terdaftar.</td>
+                                            <td colspan="5" class="px-4 py-4 text-center text-gray-400 text-xs">Belum ada karyawan yang terdaftar.</td>
                                         </tr>
                                     <?php endif; ?>
                                 </tbody>

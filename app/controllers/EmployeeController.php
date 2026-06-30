@@ -22,21 +22,59 @@ class EmployeeController {
         include __DIR__ . '/../views/employee_add.php';
     }
 
+    // FUNGSI BARU: Memproses update data dari form edit
+    public function update() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $id_karyawan = $_POST['id_karyawan'];
+            $data = [
+                'nama_karyawan'   => trim($_POST['nama_karyawan']),
+                'email'           => trim($_POST['email']),
+                'no_telp'         => trim($_POST['no_telp']),
+                'role'            => trim($_POST['role']),
+                'status_karyawan' => trim($_POST['status_karyawan']),
+                'id_lokasi'       => trim($_POST['id_lokasi']),
+                'password'        => !empty($_POST['password']) ? trim($_POST['password']) : null
+            ];
+
+            if ($this->karyawanModel->updateKaryawan($id_karyawan, $data)) {
+                $_SESSION['success'] = 'Data karyawan berhasil diperbarui!';
+            } else {
+                $_SESSION['error'] = 'Gagal memperbarui data karyawan.';
+            }
+            header('Location: index.php?page=manager_dashboard&action=buat_akun');
+            exit;
+        }
+    }
+
+    // FUNGSI BARU: Memproses aksi hapus karyawan
+    public function delete() {
+        $id = $_GET['id'] ?? null;
+        if ($id) {
+            if ($this->karyawanModel->deleteKaryawan($id)) {
+                $_SESSION['success'] = 'Akun karyawan berhasil dihapus!';
+            } else {
+                $_SESSION['error'] = 'Gagal menghapus karyawan. Data mungkin terikat entitas lain.';
+            }
+        }
+        header('Location: index.php?page=manager_dashboard&action=buat_akun');
+        exit;
+    }
+
     // Memproses Penyimpanan Data Karyawan Baru
     public function store() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $nama_karyawan    = isset($_POST['nama_karyawan']) ? trim($_POST['nama_karyawan']) : '';
             $email            = isset($_POST['email']) ? trim($_POST['email']) : '';
-            $lokasi_id        = isset($_POST['lokasi_id']) ? trim($_POST['lokasi_id']) : ''; // <-- TAMBAHKAN INI
+            $id_lokasi        = isset($_POST['id_lokasi']) ? trim($_POST['id_lokasi']) : ''; // <-- TAMBAHKAN INI
             $no_telp          = isset($_POST['no_telp']) ? trim($_POST['no_telp']) : '';
             $password         = isset($_POST['password']) ? trim($_POST['password']) : '';
             $role             = isset($_POST['role']) ? trim($_POST['role']) : '';
             $status_karyawan  = isset($_POST['status_karyawan']) ? trim($_POST['status_karyawan']) : 'Aktif';
 
-            // Validasi sederhana (lokasi_id dimasukkan ke dalam pengecekan kosong)
-            if (empty($nama_karyawan) || empty($email) || empty($lokasi_id) || empty($password) || empty($role)) {
+            // Validasi sederhana (id_lokasi dimasukkan ke dalam pengecekan kosong)
+            if (empty($nama_karyawan) || empty($email) || empty($id_lokasi) || empty($password) || empty($role)) {
                 $_SESSION['error'] = 'Semua field wajib diisi!';
-                header('Location: index.php?page=karyawan_tambah');
+                header('Location: index.php?page=manager_dashboard&action=buat_akun');
                 exit;
             }
 
@@ -47,7 +85,7 @@ class EmployeeController {
             $success = $this->karyawanModel->createKaryawan([
                 'nama_karyawan'   => $nama_karyawan,
                 'email'           => $email,
-                'lokasi_id'       => $lokasi_id, // <-- PASTIKAN DIKIRIM KE MODEL
+                'id_lokasi'       => $id_lokasi, // <-- PASTIKAN DIKIRIM KE MODEL
                 'no_telp'         => $no_telp,
                 'password'        => $hashed_password,
                 'role'            => $role,
@@ -59,7 +97,7 @@ class EmployeeController {
                 header('Location: index.php?page=manager_dashboard');
             } else {
                 $_SESSION['error'] = 'Gagal menambahkan karyawan. Email mungkin sudah terdaftar.';
-                header('Location: index.php?page=karyawan_tambah');
+                header('Location: index.php?page=manager_dashboard&action=buat_akun');
             }
             exit;
         }

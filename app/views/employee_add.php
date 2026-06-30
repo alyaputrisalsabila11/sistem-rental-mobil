@@ -58,15 +58,6 @@
                         <option value="Staff Lapangan">Staff Lapangan</option>
                     </select>
                 </div>
-
-                <div>
-                    <label class="block text-gray-700 font-semibold mb-1">Status Awal</label>
-                    <select name="status_karyawan" class="w-full border p-2 rounded focus:outline-blue-500">
-                        <option value="Aktif">Aktif</option>
-                        <option value="Tidak Aktif">Tidak Aktif</option>
-                        <option value="Cuti">Cuti</option>
-                    </select>
-                </div>
             </div>
 
             <div class="flex justify-end space-x-3 pt-4 border-t">
