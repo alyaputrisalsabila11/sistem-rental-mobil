@@ -27,25 +27,27 @@ class EmployeeController {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $nama_karyawan    = isset($_POST['nama_karyawan']) ? trim($_POST['nama_karyawan']) : '';
             $email            = isset($_POST['email']) ? trim($_POST['email']) : '';
+            $lokasi_id        = isset($_POST['lokasi_id']) ? trim($_POST['lokasi_id']) : ''; // <-- TAMBAHKAN INI
             $no_telp          = isset($_POST['no_telp']) ? trim($_POST['no_telp']) : '';
             $password         = isset($_POST['password']) ? trim($_POST['password']) : '';
             $role             = isset($_POST['role']) ? trim($_POST['role']) : '';
             $status_karyawan  = isset($_POST['status_karyawan']) ? trim($_POST['status_karyawan']) : 'Aktif';
 
-            // Validasi sederhana
-            if (empty($nama_karyawan) || empty($email) || empty($password) || empty($role)) {
+            // Validasi sederhana (lokasi_id dimasukkan ke dalam pengecekan kosong)
+            if (empty($nama_karyawan) || empty($email) || empty($lokasi_id) || empty($password) || empty($role)) {
                 $_SESSION['error'] = 'Semua field wajib diisi!';
                 header('Location: index.php?page=karyawan_tambah');
                 exit;
             }
 
-            // Hash password secara aman (menggunakan BCRYPT, standar industri)
+            // Hash password secara aman
             $hashed_password = password_hash($password, PASSWORD_BCRYPT);
 
             // Simpan ke database via model
             $success = $this->karyawanModel->createKaryawan([
                 'nama_karyawan'   => $nama_karyawan,
                 'email'           => $email,
+                'lokasi_id'       => $lokasi_id, // <-- PASTIKAN DIKIRIM KE MODEL
                 'no_telp'         => $no_telp,
                 'password'        => $hashed_password,
                 'role'            => $role,
