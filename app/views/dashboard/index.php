@@ -56,7 +56,7 @@ $brand_name = "SIREMO"; // Nama brand aplikasi
                 </div>
                 <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-purple-500 hover:shadow-md transition">
                     <p class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Tier Membership</p>
-                    <p class="text-2xl font-black text-purple-600 mt-1" style="font-size: 1.5rem !important;">Bronze</p>
+<p class="text-2xl font-black text-purple-600 mt-1" style="font-size: 1.5rem !important;">Bronze</p>
                 </div>
                 <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 border-orange-500 hover:shadow-md transition">
                     <p class="text-gray-500 text-xs font-semibold uppercase tracking-wider">Status Akun</p>

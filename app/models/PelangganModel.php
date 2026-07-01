@@ -71,9 +71,10 @@ class PelangganModel {
     // Buat user baru
     public function createUser($nama_lengkap, $username, $email, $password, $no_telp, $alamat, $no_ktp = null) {
         try {
+            // id_level langsung diisi 1 (asumsi id_level = 1 adalah level Regular/Bronze di tabel loyalitas)
             $stmt = $this->db->prepare(
-                "INSERT INTO pelanggan (nama_lengkap, username, email, password, no_telp, alamat, no_ktp, loyalitas) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, 'Regular')"
+                "INSERT INTO pelanggan (nama_lengkap, username, email, password, no_telp, alamat, no_ktp, poin, id_level) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1)"
             );
             $result = $stmt->execute([$nama_lengkap, $username, $email, $password, $no_telp, $alamat, $no_ktp]);
             

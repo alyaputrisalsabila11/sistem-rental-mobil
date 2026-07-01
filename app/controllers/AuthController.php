@@ -36,7 +36,8 @@ class AuthController {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_name'] = $user['nama_lengkap'];
             $_SESSION['user_email'] = $user['email'];
-            $_SESSION['role'] = 'pelanggan'; // Set role manual untuk pelanggan
+            $_SESSION['role'] = 'pelanggan';
+            $_SESSION['id_level'] = $user['id_level'];
 
             session_write_close();
             header('Location: index.php?page=home');
