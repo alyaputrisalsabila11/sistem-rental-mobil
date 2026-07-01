@@ -1,6 +1,8 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) {
-    if (!isset($_SESSION)) { session_start(); }
+    if (!isset($_SESSION)) {
+        session_start();
+    }
 }
 
 require_once __DIR__ . '/../../../config/database.php';
@@ -20,8 +22,7 @@ if ($action === 'home') {
     $jumlah_belum_serah_kunci = $stmtJalan->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
 
     // 2. Data statis maintenance bawaan kode awalmu
-    $jumlah_belum_maintenance = 5; 
-
+    $jumlah_belum_maintenance = 5;
 } elseif ($action === 'tugas_sopir') {
     // Ambil tugas mengemudi yang statusnya 'Confirmed' DAN nama kolom sopir cocok dengan nama staff yang login
     $stmtTugas = $db->prepare("SELECT b.*, m.merk_mobil, m.plat_nomor, p.nama_lengkap, p.no_telp 
@@ -34,7 +35,10 @@ if ($action === 'home') {
     // Gunakan % agar pencarian LIKE fleksibel (karena di database formatnya "Nama - NoTelp")
     $stmtTugas->execute([':staff_name' => "%" . $staff_name . "%"]);
     $tugas_list = $stmtTugas->fetchAll(PDO::FETCH_ASSOC);
-
+} elseif ($action === 'penyerahan') {
+    require_once __DIR__ . '/../../models/PenyerahanModel.php';
+    $penyerahanModel = new PenyerahanModel();
+    $booking = $penyerahanModel->getBookingConfirmed();
 } elseif ($action === 'pengembalian') {
     // Kelola Kembali HANYA menampilkan mobil yang disewa 'Tanpa Sopir' (Lepas Kunci)
     // Karena mobil yang pakai sopir akan otomatis dipulangkan oleh sopirnya lewat menu "Tugas Sopir" nanti
@@ -50,6 +54,7 @@ if ($action === 'home') {
 ?>
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -57,6 +62,7 @@ if ($action === 'home') {
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
+
 <body class="bg-gray-100 font-sans flex h-screen overflow-hidden">
 
     <aside class="w-64 bg-slate-900 text-white flex flex-col flex-shrink-0 shadow-xl">
@@ -77,26 +83,44 @@ if ($action === 'home') {
         </div>
 
         <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto">
-            <a href="index.php?page=home_lapangan&action=home" 
-               class="flex items-center space-x-3 py-3 px-4 rounded-xl text-sm font-bold transition group <?= $action === 'home' ? 'bg-white/15 text-white shadow-inner border-l-4 border-amber-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white' ?>">
+            <a href="index.php?page=home_lapangan&action=home"
+                class="flex items-center space-x-3 py-3 px-4 rounded-xl text-sm font-bold transition group <?= $action === 'home' ? 'bg-white/15 text-white shadow-inner border-l-4 border-amber-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white' ?>">
                 <i class="fas fa-chart-line text-base w-5 text-center group-hover:text-amber-400 transition"></i>
                 <span>Dashboard</span>
             </a>
 
-            <a href="index.php?page=home_lapangan&action=tugas_sopir" 
-               class="flex items-center space-x-3 py-3 px-4 rounded-xl text-sm font-bold transition group <?= $action === 'tugas_sopir' ? 'bg-white/15 text-white shadow-inner border-l-4 border-amber-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white' ?>">
+            <a href="index.php?page=home_lapangan&action=tugas_sopir"
+                class="flex items-center space-x-3 py-3 px-4 rounded-xl text-sm font-bold transition group <?= $action === 'tugas_sopir' ? 'bg-white/15 text-white shadow-inner border-l-4 border-amber-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white' ?>">
                 <i class="fas fa-id-card text-base w-5 text-center group-hover:text-amber-400 transition"></i>
                 <span>Tugas Sopir</span>
             </a>
 
-            <a href="index.php?page=home_lapangan&action=pengembalian" 
-               class="flex items-center space-x-3 py-3 px-4 rounded-xl text-sm font-bold transition group <?= $action === 'pengembalian' ? 'bg-white/15 text-white shadow-inner border-l-4 border-amber-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white' ?>">
+            <a href="index.php?page=home_lapangan&action=penyerahan"
+   class="flex items-center space-x-3 py-3 px-4 rounded-xl text-sm font-bold transition group <?= $action === 'penyerahan' ? 'bg-white/15 text-white shadow-inner border-l-4 border-amber-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white' ?>">
+
+    <i class="fas fa-key text-base w-5 text-center group-hover:text-amber-400 transition"></i>
+
+    <span>Penyerahan Mobil</span>
+
+</a>
+
+            <a href="index.php?page=home_lapangan&action=pengembalian"
+   class="flex items-center space-x-3 py-3 px-4 rounded-xl text-sm font-bold transition group <?= $action === 'pengembalian' ? 'bg-white/15 text-white shadow-inner border-l-4 border-amber-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white' ?>">
+
+    <i class="fas fa-undo-alt text-base w-5 text-center group-hover:text-amber-400 transition"></i>
+
+    <span>Pengembalian Mobil</span>
+
+</a>
+
+            <!-- <a href="index.php?page=home_lapangan&action=pengembalian"
+                class="flex items-center space-x-3 py-3 px-4 rounded-xl text-sm font-bold transition group <?= $action === 'pengembalian' ? 'bg-white/15 text-white shadow-inner border-l-4 border-amber-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white' ?>">
                 <i class="fas fa-undo-alt text-base w-5 text-center group-hover:text-amber-400 transition"></i>
                 <span>Kelola Kembali</span>
-            </a>
+            </a> -->
 
-            <a href="index.php?page=home_lapangan&action=lapor_kerusakan" 
-               class="flex items-center space-x-3 py-3 px-4 rounded-xl text-sm font-bold transition group <?= $action === 'lapor_kerusakan' ? 'bg-white/15 text-white shadow-inner border-l-4 border-amber-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white' ?>">
+            <a href="index.php?page=home_lapangan&action=lapor_kerusakan"
+                class="flex items-center space-x-3 py-3 px-4 rounded-xl text-sm font-bold transition group <?= $action === 'lapor_kerusakan' ? 'bg-white/15 text-white shadow-inner border-l-4 border-amber-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white' ?>">
                 <i class="fas fa-exclamation-triangle text-base w-5 text-center group-hover:text-amber-400 transition"></i>
                 <span>Lapor Kerusakan</span>
             </a>
@@ -111,16 +135,17 @@ if ($action === 'home') {
     </aside>
 
     <div class="flex-1 flex flex-col overflow-hidden">
-        
+
         <header class="bg-white shadow-sm border-b border-gray-100 h-16 flex items-center justify-between px-8 flex-shrink-0">
             <div>
                 <h1 class="text-lg font-bold text-gray-800 uppercase tracking-wide">
-                    <?php 
-                        if ($action === 'home') echo 'DASHBOARD OPERASIONAL';
-                        elseif ($action === 'tambah_mobil') echo 'TAMBAH UNIT BARU';
-                        elseif ($action === 'tugas_sopir') echo 'JADWAL TUGAS SOPIR';
-                        elseif ($action === 'pengembalian') echo 'VALIDASI MOBIL MASUK GARASI';
-                        elseif ($action === 'lapor_kerusakan') echo 'LAPORAN KERUSAKAN FLEET';
+                    <?php
+                    if ($action === 'home') echo 'DASHBOARD OPERASIONAL';
+                    elseif ($action === 'tambah_mobil') echo 'TAMBAH UNIT BARU';
+                    elseif ($action === 'tugas_sopir') echo 'JADWAL TUGAS SOPIR';
+                    elseif ($action === 'penyerahan') echo 'PENYERAHAN MOBIL';
+                    elseif ($action === 'pengembalian') echo 'VALIDASI MOBIL MASUK GARASI';
+                    elseif ($action === 'lapor_kerusakan') echo 'LAPORAN KERUSAKAN FLEET';
                     ?>
                 </h1>
             </div>
@@ -181,8 +206,8 @@ if ($action === 'home') {
                                         </div>
                                     </div>
                                     <div class="pt-2">
-                                        <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $t['no_telp']); ?>" target="_blank" 
-                                           class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-center font-bold text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm">
+                                        <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $t['no_telp']); ?>" target="_blank"
+                                            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-center font-bold text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm">
                                             <i class="fab fa-whatsapp text-sm"></i> Hubungi Kontak Pelanggan
                                         </a>
                                     </div>
@@ -193,6 +218,69 @@ if ($action === 'home') {
                         <div class="md:col-span-2 bg-white rounded-2xl p-16 text-center border border-gray-200">
                             <i class="fas fa-smile-beam text-5xl text-gray-300 mb-3 block"></i>
                             <p class="text-sm text-gray-400 font-bold uppercase tracking-wider">Belum ada tugas menyetir aktif untuk Anda hari ini.</p>
+                        </div>
+                    <?php endif; ?>
+                </div>
+
+            <?php elseif ($action === 'penyerahan'): ?>
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200">
+                    <div class="p-6 border-b border-gray-100">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            <i class="fas fa-key text-amber-500"></i>
+                            Daftar Penyerahan Mobil
+                        </h2>
+                        <p class="text-sm text-gray-500 mt-1">
+                            Booking yang telah dikonfirmasi Admin akan muncul di sini untuk dilakukan proses penyerahan.
+                        </p>
+                    </div>
+                    <?php if (!empty($booking)): ?>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full border border-gray-200 rounded-xl">
+                            <thead class="bg-gray-100">
+                                <tr>
+                                    <th class="px-4 py-3 text-left">No</th>
+                                    <th class="px-4 py-3 text-left">Kode Booking</th>
+                                    <th class="px-4 py-3 text-left">Pelanggan</th>
+                                    <th class="px-4 py-3 text-left">Mobil</th>
+                                    <th class="px-4 py-3 text-left">Plat Nomor</th>
+                                    <th class="px-4 py-3 text-center">Status</th>
+                                    <th class="px-4 py-3 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php $no = 1; ?>
+                                <?php foreach ($booking as $row): ?>
+                                    <tr class="border-b hover:bg-gray-50">
+                                        <td class="px-4 py-3"><?= $no++; ?></td>
+                                        <td class="px-4 py-3"><?= $row['kode_booking']; ?></td>
+                                        <td class="px-4 py-3"><?= $row['nama_lengkap']; ?></td>
+                                        <td class="px-4 py-3"><?= $row['merk_mobil']; ?></td>
+                                        <td class="px-4 py-3"><?= $row['plat_nomor']; ?></td>
+                                        <td class="px-4 py-3 text-center">
+                                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
+                                                <?= $row['status_booking']; ?>
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <a href="index.php?page=penyerahan_create&id=<?= $row['id_booking']; ?>"
+                                                class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">
+                                                Isi Form
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="p-16 text-center">
+                            <i class="fas fa-key text-5xl text-gray-300 mb-4"></i>
+                            <h3 class="font-bold text-gray-500">
+                                Belum Ada Penyerahan Mobil
+                            </h3>
+                            <p class="text-sm text-gray-400 mt-2">
+                                Booking yang telah disetujui Staff Admin akan muncul di halaman ini.
+                            </p>
                         </div>
                     <?php endif; ?>
                 </div>
@@ -291,17 +379,18 @@ if ($action === 'home') {
     </div>
 
     <script>
-    function toggleDendaInput(selectElement, bookingId) {
-        var boxNominal = document.getElementById('box_nominal_' + bookingId);
-        if (selectElement.value !== 'Aman') {
-            boxNominal.classList.remove('hidden');
-            boxNominal.querySelector('input').setAttribute('required', 'required');
-        } else {
-            boxNominal.classList.add('hidden');
-            boxNominal.querySelector('input').removeAttribute('required');
-            boxNominal.querySelector('input').value = '';
+        function toggleDendaInput(selectElement, bookingId) {
+            var boxNominal = document.getElementById('box_nominal_' + bookingId);
+            if (selectElement.value !== 'Aman') {
+                boxNominal.classList.remove('hidden');
+                boxNominal.querySelector('input').setAttribute('required', 'required');
+            } else {
+                boxNominal.classList.add('hidden');
+                boxNominal.querySelector('input').removeAttribute('required');
+                boxNominal.querySelector('input').value = '';
+            }
         }
-    }
     </script>
 </body>
+
 </html>

@@ -57,11 +57,11 @@ switch ($page) {
     case 'proses_booking':
         // PENTING: Kita panggil langsung filenya secara manual untuk bypass kegagalan autoload
         // Sesuaikan jalur titik dua (..) di bawah ini dengan lokasi asli file BookingController.php kamu
-        
+
         // JIKA file BookingController.php kamu berada di folder root (sejajar dengan index.php):
         if (file_exists(__DIR__ . '/BookingController.php')) {
             require_once __DIR__ . '/BookingController.php';
-        } 
+        }
         // JIKA file BookingController.php kamu berada di dalam subfolder transaksi:
         elseif (file_exists(__DIR__ . '/../app/controllers/transaksi/BookingController.php')) {
             require_once __DIR__ . '/../app/controllers/transaksi/BookingController.php';
@@ -98,12 +98,31 @@ switch ($page) {
     case 'mobil_proses_tambah':
         (new MobilController())->store();
         break;
-    // Tambahkan case baru ini di dalam switch ($page) index.php kamu
     case 'konfirmasi_admin':
         (new AdminController())->konfirmasiPersetujuan();
         break;
     case 'proses_aksi_admin':
         (new AdminController())->prosesAksi();
+        break;
+    case 'penyerahan':
+        (new PenyerahanController())->index();
+        break;
+
+    case 'penyerahan_create':
+        (new PenyerahanController())->create();
+        break;
+
+    case 'penyerahan_store':
+        (new PenyerahanController())->store();
+        break;
+    case 'pengembalian':
+        (new PengembalianController())->index();
+        break;
+    case 'pengembalian_create':
+        (new PengembalianController())->create();
+        break;
+    case 'pengembalian_store':
+        (new PengembalianController())->store();
         break;
     case 'lokasi_proses_tambah':
         (new LokasiController())->store();

@@ -1,15 +1,18 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
 
-class AdminController {
+class AdminController
+{
     private $db;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->db = Database::getConnection();
     }
 
     // 1. Menampilkan halaman konfirmasi pesanan yang masuk
-    public function konfirmasiPersetujuan() {
+    public function konfirmasiPersetujuan()
+    {
         // Ambil semua data booking yang statusnya masih 'Pending'
         $sql = "SELECT b.*, m.merk_mobil, p.nama_lengkap as nama_pelanggan 
                 FROM booking b
@@ -26,13 +29,15 @@ class AdminController {
     }
 
     // 2. Proses aksi dari tombol Approve / Reject
-    public function prosesAksi() {
+    public function prosesAksi()
+    {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id_booking = intval($_POST['id_booking']);
             $id_mobil   = intval($_POST['id_mobil']);
             $aksi       = $_POST['aksi']; // 'setuju' atau 'tolak'
-            
+
             try {
+                $this->db->beginTransaction();
                 if ($aksi === 'setuju') {
                     // Cek apakah pakai sopir, jika ya ambil nama sopir dari input form
                     $sopir = isset($_POST['nama_sopir']) && !empty($_POST['nama_sopir']) ? $_POST['nama_sopir'] : 'Tanpa Sopir';
@@ -40,8 +45,18 @@ class AdminController {
                     $sql = "UPDATE booking SET status_booking = 'Confirmed', sopir_booking = :sopir WHERE id_booking = :id";
                     $stmt = $this->db->prepare($sql);
                     $stmt->execute([':sopir' => $sopir, ':id' => $id_booking]);
-                    
-                    // Status mobil tetap 'Disewa' (sudah diubah saat user booking)
+                    $sqlMobil = "
+                    UPDATE mobil
+                    SET status_mobil='Dibooking'
+                    WHERE id_mobil=:id
+                    ";
+
+                    $stmtMobil = $this->db->prepare($sqlMobil);
+
+                    $stmtMobil->execute([
+                        ':id' => $id_mobil
+                    ]);
+                    $this->db->commit();
                     $msg = "Pesanan berhasil disetujui!";
                 } else {
                     // Jika ditolak, batalkan transaksi dan kembalikan status mobil jadi 'Tersedia'
@@ -52,13 +67,21 @@ class AdminController {
                     $sqlMob = "UPDATE mobil SET status_mobil = 'Tersedia' WHERE id_mobil = :id_mobil";
                     $stmtMob = $this->db->prepare($sqlMob);
                     $stmtMob->execute([':id_mobil' => $id_mobil]);
-                    
+
+                    $this->db->commit();
                     $msg = "Pesanan berhasil ditolak dan armada mobil telah dibebaskan!";
                 }
 
                 echo "<script>alert('$msg'); window.location.href = 'index.php?page=konfirmasi_admin';</script>";
             } catch (Exception $e) {
-                echo "<script>alert('Gagal: " . $e->getMessage() . "'); window.location.href = 'index.php?page=konfirmasi_admin';</script>";
+                if ($this->db->inTransaction()) {
+                    $this->db->rollBack();
+                }
+
+                echo "<script>
+                    alert('Gagal: " . $e->getMessage() . "');
+                    window.location.href='index.php?page=konfirmasi_admin';
+                </script>";
             }
         }
     }
