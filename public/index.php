@@ -123,6 +123,12 @@ switch ($page) {
     case 'karyawan_hapus':
         (new EmployeeController())->delete();
         break;
+    case 'voucher_proses_tambah':
+        (new VoucherController())->store();
+        break;
+    case 'loyal_proses_tambah':
+        (new LoyalController())->store();
+        break;
 
     default:
         include __DIR__ . '/../app/views/landing.php';

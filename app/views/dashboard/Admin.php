@@ -44,15 +44,12 @@ if ($action === 'home') {
     $stmtBooking = $db->query($queryBooking);
     $booking_list = $stmtBooking->fetchAll(PDO::FETCH_ASSOC);
 
-// ... Kode logika action atas lainnya (data_mobil, booking, data_pelanggan) ...
-
 } elseif ($action === 'data_pelanggan') { 
     require_once __DIR__ . '/../../models/PelangganModel.php';
     $pelangganModel = new PelangganModel();
     $daftar_pelanggan = $pelangganModel->getAllPelanggan();
 
 } elseif ($action === 'konfirmasi_booking') {
-    // 1. Ambil data booking yang statusnya masih 'Pending'
     $sqlPending = "SELECT b.*, m.merk_mobil, p.nama_lengkap as nama_pelanggan 
                    FROM booking b
                    JOIN mobil m ON b.id_mobil = m.id_mobil
@@ -61,8 +58,7 @@ if ($action === 'home') {
                    ORDER BY b.id_booking ASC";
     $stmtPending = $db->query($sqlPending);
     $pendingBookings = $stmtPending->fetchAll(PDO::FETCH_ASSOC);
-
-    // 2. TAMBAHAN: Ambil data karyawan yang rolenya adalah 'stafflapangan' untuk pilihan sopir
+    
     $sqlSopir = "SELECT id_karyawan, nama_karyawan, no_telp FROM karyawan WHERE role = 'Staff Lapangan'";
     $stmtSopir = $db->query($sqlSopir);
     $daftar_sopir = $stmtSopir->fetchAll(PDO::FETCH_ASSOC);

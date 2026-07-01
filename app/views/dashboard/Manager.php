@@ -38,6 +38,16 @@
                class="flex items-center space-x-3 py-3 px-4 rounded-xl text-sm font-bold transition group <?= $action === 'buat_lokasi' ? 'bg-white/15 text-white shadow-inner border-l-4 border-indigo-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white' ?>">
                 <span>Buat Cabang</span>
             </a>
+
+            <a href="index.php?page=manager_dashboard&action=buat_voucher" 
+               class="flex items-center space-x-3 py-3 px-4 rounded-xl text-sm font-bold transition group <?= $action === 'buat_voucher' ? 'bg-white/15 text-white shadow-inner border-l-4 border-indigo-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white' ?>">
+                <span>Kelola Voucher</span>
+            </a>
+
+            <a href="index.php?page=manager_dashboard&action=buat_loyal" 
+               class="flex items-center space-x-3 py-3 px-4 rounded-xl text-sm font-bold transition group <?= $action === 'buat_loyal' ? 'bg-white/15 text-white shadow-inner border-l-4 border-indigo-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white' ?>">
+                <span>Kelola Loyalitas</span>
+            </a>
             
             <a href="index.php?page=manager_dashboard&action=buat_akun" 
                class="flex items-center space-x-3 py-3 px-4 rounded-xl text-sm font-bold transition group <?= $action === 'buat_akun' ? 'bg-white/15 text-white shadow-inner border-l-4 border-indigo-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white' ?>">
@@ -244,6 +254,7 @@
                         </div>
                     </form>
                 </div>
+
                 <?php elseif ($action === 'edit_karyawan' && $karyawanEdit): ?>
                 <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm max-w-2xl mx-auto mt-8">
                     <h2 class="text-lg font-bold text-gray-800 border-b pb-3 mb-4 flex items-center space-x-2">
@@ -314,6 +325,120 @@
                         </div>
                     </form>
                 </div>
+
+                <?php elseif ($action === 'buat_loyal'): ?>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm h-fit lg:col-span-1">
+            <h2 class="text-lg font-bold text-gray-800 border-b pb-3 mb-4 flex items-center space-x-2">
+                <span>Buat Loyalitas</span>
+            </h2>
+            
+            <form action="index.php?page=loyal_proses_tambah" method="POST" class="flex flex-col space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">Nama Level</label>
+                    <input type="text" name="nama_level" placeholder="Nama Level (ex: Silver)" class="border p-2 rounded w-full" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">Syarat</label>
+                    <input type="number" name="syarat" placeholder="Syarat (ex: 5)" class="border p-2 rounded w-full" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">Poin</label>
+                    <input type="number" name="poin" placeholder="Poin yang Diberikan" class="border p-2 rounded w-full" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 mb-1">Keterangan</label>
+                    <input type="text" name="keterangan" placeholder="Keterangan (opsional)" class="border p-2 rounded w-full">
+                </div>
+                
+                <div class="flex items-center space-x-2 pt-2">
+                    <input type="checkbox" name="aktif" class="form-checkbox h-4 w-4 text-indigo-600">
+                    <span class="text-sm font-medium text-gray-700">Aktifkan Level</span>
+                </div>
+                
+                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2 rounded w-full mt-2 transition-colors">
+                    Simpan
+                </button>
+            </form>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm lg:col-span-2 overflow-x-auto">
+            <h2 class="text-lg font-bold text-gray-800 border-b pb-3 mb-4 flex items-center space-x-2">
+                <span>Daftar Level Loyalitas</span>
+            </h2>
+            
+            <table class="w-full text-sm text-left">
+                <thead>
+                    <tr class="bg-gray-100 text-gray-700">
+                        <th class="p-3 rounded-tl-lg">Nama Level</th>
+                        <th class="p-3">Syarat</th>
+                        <th class="p-3">Poin</th>
+                        <th class="p-3">Keterangan</th>
+                        <th class="p-3 rounded-tr-lg">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    <?php 
+                    $loyalLevels = (new LoyalModel())->getAllLoyal();
+                    foreach ($loyalLevels as $level): ?>
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="p-3 font-medium text-gray-900"><?= htmlspecialchars($level['nama_level']); ?></td>
+                        <td class="p-3 text-gray-600"><?= htmlspecialchars($level['syarat']); ?></td>
+                        <td class="p-3 text-gray-600"><?= htmlspecialchars($level['poin']); ?></td>
+                        <td class="p-3 text-gray-600"><?= htmlspecialchars($level['keterangan']); ?></td>
+                        <td class="p-3">
+                            <?= ($level['status'] === 'Aktif') 
+                                ? '<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">Aktif</span>' 
+                                : '<span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">Nonaktif</span>'; ?>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
+                <?php elseif ($action === 'buat_voucher'): ?>
+                    <div class="p-6">
+                        <h2 class="text-xl font-bold mb-4">Manajemen Voucher</h2>
+                        
+                        <form action="index.php?page=voucher_proses_tambah" method="POST" class="bg-white p-4 rounded-lg shadow mb-6 flex space-x-2 items-end">
+                            <input type="text" name="kode_voucher" placeholder="Kode (ex: DISKON50)" class="border p-2 rounded" required>
+                            <input type="number" name="diskon" placeholder="Diskon (%)" class="border p-2 rounded" required>
+                            <input type="number" name="min_transaksi" placeholder="Min. Transaksi" class="border p-2 rounded" required>
+                            <input type="date" name="berlaku_sampai" class="border p-2 rounded" required>
+                            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded">Simpan</button>
+                        </form>
+
+                        <table class="w-full bg-white rounded-lg shadow">
+                            <thead>
+                                <tr class="bg-gray-100 text-left">
+                                    <th class="p-3">Kode</th>
+                                    <th class="p-3">Diskon</th>
+                                    <th class="p-3">Min. Transaksi</th>
+                                    <th class="p-3">Kadaluarsa</th>
+                                    <th class="p-3">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php 
+                                $vouchers = (new VoucherModel())->getAllVoucher();
+                                foreach ($vouchers as $v): ?>
+                                <tr>
+                                    <td class="p-3"><?= $v['kode_voucher'] ?></td>
+                                    <td class="p-3"><?= $v['diskon'] ?>%</td>
+                                    <td class="p-3">Rp<?= number_format($v['min_transaksi']) ?></td>
+                                    <td class="p-3"><?= $v['berlaku_sampai'] ?></td>
+                                    <td class="p-3">
+                                        <a href="index.php?page=voucher_hapus&id=<?= $v['id_voucher'] ?>" class="text-red-600">Hapus</a>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 
             <?php elseif ($action === 'buat_akun'): ?>
                 
