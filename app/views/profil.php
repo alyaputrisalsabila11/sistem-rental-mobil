@@ -11,7 +11,11 @@
 
 <div class="flex min-h-screen">
     <!-- Sidebar -->
-    <?php include __DIR__ . '/layouts/sidebar.php'; ?>
+    <?php 
+    /** @var array $user */
+    /** @var string $brand_name */
+    /** @var string $current_page */
+    include __DIR__ . '/layouts/sidebar.php'; ?>
 
     <main class="flex-1 ml-64">
         <!-- Top Navbar -->
@@ -35,7 +39,7 @@
                 </div>
                 <div>
                     <h2 class="text-4xl font-bold mb-1"><?= htmlspecialchars($user['nama_lengkap']); ?></h2>
-                    <p class="text-indigo-100"><i class="fas fa-award mr-2"></i><?= htmlspecialchars($user['loyalitas']); ?> Member</p>
+                    <p class="text-indigo-100"><i class="fas fa-award mr-2"></i><?= htmlspecialchars($user['nama_level'] ?? 'Regular'); ?> Member</p>
                     <p class="text-xs text-white/40 mt-2 font-mono">Customer ID: #<?= $user['id']; ?></p>
                 </div>
             </div>

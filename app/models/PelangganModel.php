@@ -1,15 +1,18 @@
 <?php
 require_once __DIR__ . '/../../config/database.php';
 
-class PelangganModel {
+class PelangganModel
+{
     private $db;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->db = Database::getConnection();
     }
 
     // Cek email sudah terdaftar
-    public function emailExists($email) {
+    public function emailExists($email)
+    {
         try {
             $stmt = $this->db->prepare("SELECT id FROM pelanggan WHERE email = ?");
             $stmt->execute([$email]);
@@ -21,7 +24,8 @@ class PelangganModel {
     }
 
     // Cek username sudah terdaftar
-    public function usernameExists($username) {
+    public function usernameExists($username)
+    {
         try {
             $stmt = $this->db->prepare("SELECT id FROM pelanggan WHERE username = ?");
             $stmt->execute([$username]);
@@ -33,7 +37,8 @@ class PelangganModel {
     }
 
     // Ambil user berdasarkan email
-    public function getUserByEmail($email) {
+    public function getUserByEmail($email)
+    {
         try {
             $stmt = $this->db->prepare("SELECT * FROM pelanggan WHERE email = ?");
             $stmt->execute([$email]);
@@ -45,7 +50,8 @@ class PelangganModel {
     }
 
     // Ambil user berdasarkan username
-    public function getUserByUsername($username) {
+    public function getUserByUsername($username)
+    {
         try {
             $stmt = $this->db->prepare("SELECT * FROM pelanggan WHERE username = ?");
             $stmt->execute([$username]);
@@ -57,19 +63,30 @@ class PelangganModel {
     }
 
     // Ambil user berdasarkan ID (Disesuaikan ke kolom 'id')
-    public function getUserById($id) {
+    public function getUserById($id)
+    {
         try {
-            $stmt = $this->db->prepare("SELECT * FROM pelanggan WHERE id = ?");
+            $sql = "
+            SELECT
+                p.*,
+                l.nama_level
+            FROM pelanggan p
+            LEFT JOIN loyalitas l
+                ON p.id_level = l.id_level
+            WHERE p.id = ?
+        ";
+            $stmt = $this->db->prepare($sql);
             $stmt->execute([$id]);
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
-            error_log("Error getting user by id: " . $e->getMessage());
+            error_log('Error getting user by id: ' . $e->getMessage());
             return false;
         }
     }
 
     // Buat user baru
-    public function createUser($nama_lengkap, $username, $email, $password, $no_telp, $alamat, $no_ktp = null) {
+    public function createUser($nama_lengkap, $username, $email, $password, $no_telp, $alamat, $no_ktp = null)
+    {
         try {
             // id_level langsung diisi 1 (asumsi id_level = 1 adalah level Regular/Bronze di tabel loyalitas)
             $stmt = $this->db->prepare(
@@ -77,11 +94,11 @@ class PelangganModel {
                 VALUES (?, ?, ?, ?, ?, ?, ?, 0, 1)"
             );
             $result = $stmt->execute([$nama_lengkap, $username, $email, $password, $no_telp, $alamat, $no_ktp]);
-            
+
             if (!$result) {
                 error_log("Insert failed: " . implode(", ", $stmt->errorInfo()));
             }
-            
+
             return $result;
         } catch (PDOException $e) {
             error_log("Error creating user: " . $e->getMessage());
@@ -89,7 +106,8 @@ class PelangganModel {
         }
     }
 
-    public function getAllPelanggan() {
+    public function getAllPelanggan()
+    {
         try {
             $sql = "SELECT id, nama_lengkap, username, email, no_telp, alamat FROM pelanggan ORDER BY id DESC";
             $stmt = $this->db->prepare($sql);
@@ -103,7 +121,8 @@ class PelangganModel {
 
 
     // Update profil user (Disesuaikan ke kolom 'id')
-    public function updateUser($id, $nama_lengkap, $no_telp, $alamat) {
+    public function updateUser($id, $nama_lengkap, $no_telp, $alamat)
+    {
         try {
             $stmt = $this->db->prepare(
                 "UPDATE pelanggan SET nama_lengkap = ?, no_telp = ?, alamat = ? 
@@ -116,4 +135,3 @@ class PelangganModel {
         }
     }
 }
-?>

@@ -92,6 +92,17 @@ switch ($page) {
     case 'home_lapangan':
         include __DIR__ . '/../app/views/dashboard/Lapangan.php';
         break;
+    case 'pengembalian_create':
+    require_once '../app/controllers/transaksi/PengembalianController.php';
+    $controller = new PengembalianController();
+    $controller->create();
+    break;
+
+case 'pengembalian_store':
+    require_once '../app/controllers/transaksi/PengembalianController.php';
+    $controller = new PengembalianController();
+    $controller->store();
+    break;
     case 'mobil_tambah':
         (new MobilController())->create();
         break;
@@ -111,7 +122,6 @@ switch ($page) {
     case 'penyerahan_create':
         (new PenyerahanController())->create();
         break;
-
     case 'penyerahan_store':
         (new PenyerahanController())->store();
         break;

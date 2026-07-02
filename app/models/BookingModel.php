@@ -1,5 +1,5 @@
 <?php
-require_once 'C:\xampp\htdocs\Sistem Rental Mobil\config\database.php';
+require_once 'C:\xampp\htdocs\sistem-rental-mobil\config\database.php';
 
 class BookingModel
 {
@@ -117,4 +117,32 @@ class BookingModel
 
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
+
+    public function updateStatusBooking($id_booking, $status)
+{
+    $sql = "UPDATE booking
+            SET status_booking = ?
+            WHERE id_booking = ?";
+
+    $stmt = $this->db->prepare($sql);
+
+    return $stmt->execute([
+        $status,
+        $id_booking
+    ]);
+}
+
+public function updateStatusMobil($id_mobil, $status)
+{
+    $sql = "UPDATE mobil
+            SET status_mobil = ?
+            WHERE id_mobil = ?";
+
+    $stmt = $this->db->prepare($sql);
+
+    return $stmt->execute([
+        $status,
+        $id_mobil
+    ]);
+}
 } // Penutup Class BookingModel

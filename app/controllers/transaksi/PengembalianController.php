@@ -19,6 +19,7 @@ class PengembalianController
     require_once __DIR__ . '/../../views/transaksi/pengembalian/index.php';
 }
 
+
 public function create()
 {
     if (!isset($_GET['id'])) {
@@ -29,8 +30,9 @@ public function create()
 
     $penyerahan = $this->pengembalianModel->getPenyerahanById($id);
 
-    $lokasiModel = new LokasiModel();
+    require_once __DIR__ . '/../../models/LokasiModel.php';
 
+    $lokasiModel = new LokasiModel();
     $lokasi = $lokasiModel->getAllLokasi();
 
     require_once __DIR__ . '/../../views/transaksi/pengembalian/create.php';
@@ -42,20 +44,18 @@ public function store()
 
         $data = $_POST;
 
-        // sementara upload foto belum diproses
         $data['foto_kondisi'] = null;
 
         $this->pengembalianModel->simpanPengembalian($data);
 
         echo "<script>
 
-        alert('Data pengembalian berhasil disimpan.');
+            alert('Pengembalian berhasil disimpan');
 
-        window.location='index.php?page=pengembalian';
+            window.location='index.php?page=home_lapangan&action=pengembalian';
 
         </script>";
+
     }
 }
-
-
 }

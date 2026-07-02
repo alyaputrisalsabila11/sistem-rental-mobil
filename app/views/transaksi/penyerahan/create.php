@@ -1,7 +1,6 @@
 <?php 
 /** @var array $booking */
-/** @var array $lokasi */
-include __DIR__ . '/../../layouts/header.php'; ?>
+/** @var array $lokasi */ ?>
 
 <div class="container-fluid">
 
@@ -106,93 +105,7 @@ include __DIR__ . '/../../layouts/header.php'; ?>
 
                 <hr>
 
-                <div class="row">
-
                     <div class="col-md-4">
-
-                        <div class="mb-3">
-                            <label>KM Awal</label>
-
-                            <input type="number"
-                                name="km_awal"
-                                class="form-control"
-                                required>
-                        </div>
-
-                    </div>
-
-                    <div class="col-md-4">
-
-                        <div class="mb-3">
-
-                            <label>BBM Awal</label>
-
-                            <select name="bbm_awal"
-                                class="form-control">
-
-                                <option value="Full">Full</option>
-                                <option value="3/4">3/4</option>
-                                <option value="1/2">1/2</option>
-                                <option value="1/4">1/4</option>
-
-                            </select>
-
-                        </div>
-
-                    </div>
-
-                    <div class="col-md-4">
-
-                        <div class="mb-3">
-
-                            <label>Kondisi Mobil</label>
-
-                            <select name="kondisi_mobil"
-                                class="form-control">
-
-                                <option value="Sangat Baik">Sangat Baik</option>
-                                <option value="Baik">Baik</option>
-                                <option value="Cukup">Cukup</option>
-                                <option value="Perlu Perhatian">Perlu Perhatian</option>
-
-                            </select>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-                <div class="mb-3">
-
-                    <label>Checklist</label>
-
-                    <textarea name="checklist"
-                        class="form-control"
-                        rows="3"
-                        placeholder="Contoh: STNK, Dongkrak, Ban Cadangan"></textarea>
-
-                </div>
-
-                <div class="mb-3">
-
-                    <label>Catatan</label>
-
-                    <textarea name="catatan"
-                        class="form-control"
-                        rows="3"></textarea>
-
-                </div>
-
-                <div class="mb-3">
-
-                    <label>Foto Kondisi Mobil</label>
-
-                    <input type="file"
-                        name="foto_kondisi"
-                        class="form-control">
-
-                </div>
 
                 <button type="submit"
                     class="btn btn-success">
@@ -201,12 +114,10 @@ include __DIR__ . '/../../layouts/header.php'; ?>
 
                 </button>
 
-                <a href="index.php?page=penyerahan"
-                    class="btn btn-secondary">
-
-                    Kembali
-
-                </a>
+               <a href="index.php?page=home_lapangan&action=penyerahan"
+   class="btn btn-secondary">
+    Kembali
+</a>
 
             </form>
 
@@ -215,5 +126,3 @@ include __DIR__ . '/../../layouts/header.php'; ?>
     </div>
 
 </div>
-
-<?php include __DIR__ . '/../../layouts/footer.php'; ?>

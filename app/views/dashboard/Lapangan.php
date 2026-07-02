@@ -96,22 +96,19 @@ if ($action === 'home') {
             </a>
 
             <a href="index.php?page=home_lapangan&action=penyerahan"
-   class="flex items-center space-x-3 py-3 px-4 rounded-xl text-sm font-bold transition group <?= $action === 'penyerahan' ? 'bg-white/15 text-white shadow-inner border-l-4 border-amber-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white' ?>">
-
-    <i class="fas fa-key text-base w-5 text-center group-hover:text-amber-400 transition"></i>
-
-    <span>Penyerahan Mobil</span>
-
-</a>
+                class="flex items-center space-x-3 py-3 px-4 rounded-xl text-sm font-bold transition group <?= in_array($action, ['penyerahan', 'penyerahan_create']) ? 'bg-white/15 text-white shadow-inner border-l-4 border-amber-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white' ?>">
+                <i class="fas fa-key text-base w-5 text-center group-hover:text-amber-400 transition"></i>
+                <span>Penyerahan Mobil</span>
+            </a>
 
             <a href="index.php?page=home_lapangan&action=pengembalian"
-   class="flex items-center space-x-3 py-3 px-4 rounded-xl text-sm font-bold transition group <?= $action === 'pengembalian' ? 'bg-white/15 text-white shadow-inner border-l-4 border-amber-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white' ?>">
+                class="flex items-center space-x-3 py-3 px-4 rounded-xl text-sm font-bold transition group <?= in_array($action, ['pengembalian', 'pengembalian_create']) ? 'bg-white/15 text-white shadow-inner border-l-4 border-amber-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white' ?>">
 
-    <i class="fas fa-undo-alt text-base w-5 text-center group-hover:text-amber-400 transition"></i>
+                <i class="fas fa-undo-alt text-base w-5 text-center group-hover:text-amber-400 transition"></i>
 
-    <span>Pengembalian Mobil</span>
+                <span>Pengembalian Mobil</span>
 
-</a>
+            </a>
 
             <!-- <a href="index.php?page=home_lapangan&action=pengembalian"
                 class="flex items-center space-x-3 py-3 px-4 rounded-xl text-sm font-bold transition group <?= $action === 'pengembalian' ? 'bg-white/15 text-white shadow-inner border-l-4 border-amber-500' : 'text-slate-400 hover:bg-slate-800 hover:text-white' ?>">
@@ -143,8 +140,8 @@ if ($action === 'home') {
                     if ($action === 'home') echo 'DASHBOARD OPERASIONAL';
                     elseif ($action === 'tambah_mobil') echo 'TAMBAH UNIT BARU';
                     elseif ($action === 'tugas_sopir') echo 'JADWAL TUGAS SOPIR';
-                    elseif ($action === 'penyerahan') echo 'PENYERAHAN MOBIL';
-                    elseif ($action === 'pengembalian') echo 'VALIDASI MOBIL MASUK GARASI';
+                    elseif (in_array($action, ['penyerahan', 'penyerahan_create'])) echo 'PENYERAHAN MOBIL';
+                    elseif (in_array($action, ['pengembalian', 'pengembalian_create'])) echo 'DAFTAR PENGEMBALIAN MOBIL';
                     elseif ($action === 'lapor_kerusakan') echo 'LAPORAN KERUSAKAN FLEET';
                     ?>
                 </h1>
@@ -224,152 +221,231 @@ if ($action === 'home') {
 
             <?php elseif ($action === 'penyerahan'): ?>
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-200">
-                    <div class="p-6 border-b border-gray-100">
-                        <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-                            <i class="fas fa-key text-amber-500"></i>
-                            Daftar Penyerahan Mobil
-                        </h2>
-                        <p class="text-sm text-gray-500 mt-1">
-                            Booking yang telah dikonfirmasi Admin akan muncul di sini untuk dilakukan proses penyerahan.
-                        </p>
-                    </div>
-                    <?php if (!empty($booking)): ?>
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full border border-gray-200 rounded-xl">
-                            <thead class="bg-gray-100">
-                                <tr>
-                                    <th class="px-4 py-3 text-left">No</th>
-                                    <th class="px-4 py-3 text-left">Kode Booking</th>
-                                    <th class="px-4 py-3 text-left">Pelanggan</th>
-                                    <th class="px-4 py-3 text-left">Mobil</th>
-                                    <th class="px-4 py-3 text-left">Plat Nomor</th>
-                                    <th class="px-4 py-3 text-center">Status</th>
-                                    <th class="px-4 py-3 text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php $no = 1; ?>
-                                <?php foreach ($booking as $row): ?>
-                                    <tr class="border-b hover:bg-gray-50">
-                                        <td class="px-4 py-3"><?= $no++; ?></td>
-                                        <td class="px-4 py-3"><?= $row['kode_booking']; ?></td>
-                                        <td class="px-4 py-3"><?= $row['nama_lengkap']; ?></td>
-                                        <td class="px-4 py-3"><?= $row['merk_mobil']; ?></td>
-                                        <td class="px-4 py-3"><?= $row['plat_nomor']; ?></td>
-                                        <td class="px-4 py-3 text-center">
-                                            <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
-                                                <?= $row['status_booking']; ?>
-                                            </span>
-                                        </td>
-                                        <td class="px-4 py-3 text-center">
-                                            <a href="index.php?page=penyerahan_create&id=<?= $row['id_booking']; ?>"
-                                                class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">
-                                                Isi Form
-                                            </a>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                            </table>
-                        </div>
+                    <?php if (isset($_GET['form'])): ?>
+
+                        <?php
+                        require_once __DIR__ . '/../../models/PenyerahanModel.php';
+                        require_once __DIR__ . '/../../models/LokasiModel.php';
+
+                        $id = $_GET['id'] ?? 0;
+
+                        $penyerahanModel = new PenyerahanModel();
+                        $booking = $penyerahanModel->getBookingById($id);
+
+                        $lokasiModel = new LokasiModel();
+                        $lokasi = $lokasiModel->getAllLokasi();
+
+                        include __DIR__ . '/../transaksi/penyerahan/create.php';
+                        ?>
+
                     <?php else: ?>
-                        <div class="p-16 text-center">
-                            <i class="fas fa-key text-5xl text-gray-300 mb-4"></i>
-                            <h3 class="font-bold text-gray-500">
-                                Belum Ada Penyerahan Mobil
-                            </h3>
-                            <p class="text-sm text-gray-400 mt-2">
-                                Booking yang telah disetujui Staff Admin akan muncul di halaman ini.
+                        <div class="p-6 border-b border-gray-100">
+                            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                                <i class="fas fa-key text-amber-500"></i>
+                                Daftar Penyerahan Mobil
+                            </h2>
+                            <p class="text-sm text-gray-500 mt-1">
+                                Booking yang telah dikonfirmasi Admin akan muncul di sini untuk dilakukan proses penyerahan.
                             </p>
                         </div>
-                    <?php endif; ?>
+                        <?php if (!empty($booking)): ?>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full border border-gray-200 rounded-xl">
+                                    <thead class="bg-gray-100">
+                                        <tr>
+                                            <th class="px-4 py-3 text-left">No</th>
+                                            <th class="px-4 py-3 text-left">Kode Booking</th>
+                                            <th class="px-4 py-3 text-left">Pelanggan</th>
+                                            <th class="px-4 py-3 text-left">Mobil</th>
+                                            <th class="px-4 py-3 text-left">Plat Nomor</th>
+                                            <th class="px-4 py-3 text-center">Status</th>
+                                            <th class="px-4 py-3 text-center">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php $no = 1; ?>
+                                        <?php foreach ($booking as $row): ?>
+                                            <tr class="border-b hover:bg-gray-50">
+                                                <td class="px-4 py-3"><?= $no++; ?></td>
+                                                <td class="px-4 py-3"><?= $row['kode_booking']; ?></td>
+                                                <td class="px-4 py-3"><?= $row['nama_lengkap']; ?></td>
+                                                <td class="px-4 py-3"><?= $row['merk_mobil']; ?></td>
+                                                <td class="px-4 py-3"><?= $row['plat_nomor']; ?></td>
+                                                <td class="px-4 py-3 text-center">
+                                                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold">
+                                                        <?= $row['status_booking']; ?>
+                                                    </span>
+                                                </td>
+                                                <td class="px-4 py-3 text-center">
+                                                    <a href="index.php?page=home_lapangan&action=penyerahan&form=1&id=<?= $row['id_booking']; ?>"
+                                                        class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">
+
+                                                        <i class="fas fa-key"></i>
+
+                                                        Isi Form
+
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php else: ?>
+                            <div class="p-16 text-center">
+                                <i class="fas fa-key text-5xl text-gray-300 mb-4"></i>
+                                <h3 class="font-bold text-gray-500">
+                                    Belum Ada Penyerahan Mobil
+                                </h3>
+                                <p class="text-sm text-gray-400 mt-2">
+                                    Booking yang telah disetujui Staff Admin akan muncul di halaman ini.
+                                </p>
+                            </div>
+                        <?php endif; ?>
                 </div>
 
-            <?php elseif ($action === 'pengembalian'): ?>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <?php if (!empty($kembali_list)): ?>
-                        <?php foreach ($kembali_list as $k): ?>
-                            <div class="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm flex flex-col justify-between">
-                                <div class="mb-4">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <h3 class="text-base font-black text-gray-800"><?= htmlspecialchars($k['merk_mobil']); ?></h3>
-                                        <span class="px-2 py-0.5 bg-amber-50 text-amber-600 text-[10px] font-bold border border-amber-200 rounded-md">Sedang Jalan</span>
-                                    </div>
-                                    <p class="text-xs font-mono font-bold text-gray-400"><?= htmlspecialchars($k['plat_nomor']); ?> • <span class="text-indigo-600 font-sans font-bold"><?= htmlspecialchars($k['nama_lengkap']); ?></span></p>
-                                </div>
-
-                                <form action="index.php?page=proses_kembali_lapangan" method="POST" class="bg-gray-50 border border-gray-100 p-4 rounded-xl space-y-3">
-                                    <input type="hidden" name="id_booking" value="<?= $k['id_booking']; ?>">
-                                    <input type="hidden" name="id_mobil" value="<?= $k['id_mobil']; ?>">
-
-                                    <div>
-                                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Pengecekan Fisik & BBM</label>
-                                        <select name="status_denda" onchange="toggleDendaInput(this, <?= $k['id_booking']; ?>)" class="w-full bg-white border border-gray-200 p-2 rounded-xl text-xs font-medium focus:outline-none focus:border-indigo-500 cursor-pointer">
-                                            <option value="Aman">Kondisi Aman / Sesuai (Tanpa Denda)</option>
-                                            <option value="Terlambat">Terlambat Mengembalikan</option>
-                                            <option value="BBM_Kurang">Bahan Bakar (BBM) Berkurang</option>
-                                            <option value="Lecet_Rusak">Ada Lecet / Kerusakan Fisik</option>
-                                        </select>
-                                    </div>
-
-                                    <div id="box_nominal_<?= $k['id_booking']; ?>" class="hidden">
-                                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Nominal Denda Terhitung (Rp)</label>
-                                        <input type="number" name="nominal_denda" placeholder="Masukkan biaya denda, misal: 250000" class="w-full bg-white border border-gray-200 p-2 rounded-xl text-xs focus:outline-none focus:border-indigo-500">
-                                    </div>
-
-                                    <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs py-2.5 rounded-xl transition flex items-center justify-center gap-1 shadow-sm">
-                                        <i class="fas fa-clipboard-check"></i> Konfirmasi Mobil Masuk Garasi
-                                    </button>
-                                </form>
-                            </div>
-                        <?php endforeach; ?>
-                    <?php else: ?>
-                        <div class="md:col-span-2 bg-white rounded-2xl p-16 text-center border border-gray-200">
-                            <i class="fas fa-check-circle text-5xl text-emerald-400 mb-3 block"></i>
-                            <p class="text-sm text-gray-400 font-bold uppercase tracking-wider">Semua unit mobil sudah aman parkir di garasi utama.</p>
-                        </div>
-                    <?php endif; ?>
-                </div>
-
-            <?php elseif ($action === 'lapor_kerusakan'): ?>
-                <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-                    <h2 class="border-b pb-3 mb-5 text-lg font-bold text-gray-800 flex items-center gap-2">
-                        <i class="fas fa-exclamation-triangle text-amber-500"></i> Form Laporan Kendala Lapangan
-                    </h2>
-
-                    <form action="" method="POST" class="space-y-5">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-1">Pilih Unit Armada</label>
-                                <select name="id_mobil" required class="w-full border border-gray-200 p-2.5 rounded-xl text-sm bg-white focus:outline-amber-500">
-                                    <option value="">-- Pilih Mobil --</option>
-                                    <option value="1">Toyota Avanza (B 1234 ABC)</option>
-                                    <option value="2">Innova Zenix (B 5678 DEF)</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-1">Jenis Masalah</label>
-                                <div class="flex gap-4 mt-2.5 text-sm font-medium text-gray-700">
-                                    <label class="flex items-center cursor-pointer"><input type="radio" name="jenis" value="Perbaikan" checked class="w-4 h-4 text-amber-600 border-gray-300 mr-2"> Perbaikan Ringan/Berat</label>
-                                    <label class="flex items-center cursor-pointer"><input type="radio" name="jenis" value="Servis" class="w-4 h-4 text-amber-600 border-gray-300 mr-2"> Servis Berkala (Ganti Oli/Dll)</label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-bold text-gray-600 mb-1">Detail Deskripsi Kerusakan / Perbaikan</label>
-                            <textarea name="deskripsi" rows="4" required placeholder="Contoh: Lampu utama sebelah kiri mati total, rem depan mulai menipis..." class="w-full border border-gray-200 p-2.5 rounded-xl text-sm focus:outline-amber-500 bg-gray-50/50"></textarea>
-                        </div>
-
-                        <div class="flex justify-end pt-3 border-t">
-                            <button type="submit" class="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-xl shadow-sm transition">
-                                <i class="fas fa-paper-plane mr-1.5"></i> Kirim Laporan Lapangan
-                            </button>
-                        </div>
-                    </form>
-                </div>
             <?php endif; ?>
+        <?php elseif ($action === 'pengembalian'): ?>
+
+            <?php
+                require_once __DIR__ . '/../../models/PengembalianModel.php';
+
+                $pengembalianModel = new PengembalianModel();
+                $penyerahan = $pengembalianModel->getPenyerahanOngoing();
+            ?>
+
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200">
+
+                <?php if (isset($_GET['form'])): ?>
+
+                    <?php
+                    $id = $_GET['id'] ?? 0;
+                    $penyerahan = $pengembalianModel->getPenyerahanById($id);
+
+                    include __DIR__ . '/../transaksi/pengembalian/create.php';
+                    ?>
+
+                <?php else: ?>
+
+                    <div class="p-6 border-b border-gray-100">
+
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            <i class="fas fa-undo text-blue-500"></i>
+                            Daftar Pengembalian Mobil
+                        </h2>
+
+                        <p class="text-sm text-gray-500 mt-1">
+                            Kendaraan yang sedang disewa dan siap dikembalikan.
+                        </p>
+
+                    </div>
+
+                    <?php if (!empty($penyerahan)): ?>
+
+                        <div class="overflow-x-auto">
+
+                            <table class="min-w-full border border-gray-200 rounded-xl">
+
+                                <thead class="bg-gray-100">
+
+                                    <tr>
+
+                                        <th class="px-4 py-3 text-left">No</th>
+
+                                        <th class="px-4 py-3 text-left">Kode Booking</th>
+
+                                        <th class="px-4 py-3 text-left">Pelanggan</th>
+
+                                        <th class="px-4 py-3 text-left">Mobil</th>
+
+                                        <th class="px-4 py-3 text-left">Plat Nomor</th>
+
+                                        <th class="px-4 py-3 text-center">Status</th>
+
+                                        <th class="px-4 py-3 text-center">Aksi</th>
+
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                    <?php $no = 1; ?>
+
+                                    <?php foreach ($penyerahan as $row): ?>
+
+                                        <tr class="border-b hover:bg-gray-50">
+
+                                            <td class="px-4 py-3"><?= $no++; ?></td>
+
+                                            <td class="px-4 py-3"><?= $row['kode_booking']; ?></td>
+
+                                            <td class="px-4 py-3"><?= $row['nama_lengkap']; ?></td>
+
+                                            <td class="px-4 py-3"><?= $row['merk_mobil']; ?></td>
+
+                                            <td class="px-4 py-3"><?= $row['plat_nomor']; ?></td>
+
+                                            <td class="px-4 py-3 text-center">
+
+                                                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold">
+
+                                                    Ongoing
+
+                                                </span>
+
+                                            </td>
+
+                                            <td class="px-4 py-3 text-center">
+
+                                                <a href="index.php?page=home_lapangan&action=pengembalian&form=1&id=<?= $row['id_penyerahan']; ?>"
+                                                    class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-semibold">
+
+                                                    <i class="fas fa-undo"></i>
+
+                                                    Isi Form
+
+                                                </a>
+
+                                            </td>
+
+                                        </tr>
+
+                                    <?php endforeach; ?>
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    <?php else: ?>
+
+                        <div class="p-16 text-center">
+
+                            <i class="fas fa-check-circle text-5xl text-gray-300 mb-4"></i>
+
+                            <h3 class="font-bold text-gray-500">
+
+                                Belum Ada Pengembalian Mobil
+
+                            </h3>
+
+                            <p class="text-sm text-gray-400 mt-2">
+
+                                Mobil yang sedang disewa akan muncul di sini.
+
+                            </p>
+
+                        </div>
+
+                    <?php endif; ?>
+
+                <?php endif; ?>
+
+            </div>
+
 
         </main>
 
@@ -392,5 +468,6 @@ if ($action === 'home') {
         }
     </script>
 </body>
+<?php endif; ?>
 
 </html>
