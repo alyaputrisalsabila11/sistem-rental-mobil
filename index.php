@@ -47,11 +47,17 @@ switch ($page) {
     case 'lokasi_hapus':
         (new LokasiController())->delete();
         break;
+    case 'karyawan_tambah':
+        (new KaryawanController())->create();
+        break;
+    case 'karyawan_proses_tambah':
+        (new KaryawanController())->store();
+        break;
     case 'karyawan_proses_edit':
-        (new EmployeeController())->update();
+        (new KaryawanController())->update();
         break;
     case 'karyawan_hapus':
-        (new EmployeeController())->delete();
+        (new KaryawanController())->delete();
         break;
     case 'loyal_proses_edit':
         (new LoyalController())->update();

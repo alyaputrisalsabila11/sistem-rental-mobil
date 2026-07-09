@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../init.php';
 
-class EmployeeController {
+class KaryawanController {
     private $karyawanModel;
 
     public function __construct() {
@@ -19,7 +19,7 @@ class EmployeeController {
 
     // Menampilkan Form Tambah Karyawan
     public function create() {
-        include __DIR__ . '/../views/employee_add.php';
+
     }
 
     // FUNGSI BARU: Memproses update data dari form edit
