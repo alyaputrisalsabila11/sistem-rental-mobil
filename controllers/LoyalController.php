@@ -43,7 +43,7 @@ class LoyalController {
 
             if ($success) {
                 $_SESSION['success'] = 'Level loyalitas baru berhasil ditambahkan!';
-                header('Location: index.php?page=manager_dashboard&action=kelola_loyalitas');
+                header('Location: index.php?page=manager_dashboard&action=data_loyalitas');
             } else {
                 $_SESSION['error'] = 'Gagal menambahkan data loyalitas.';
                 header('Location: index.php?page=manager_dashboard&action=buat_loyalitas');
@@ -69,7 +69,7 @@ class LoyalController {
             } else {
                 $_SESSION['error'] = 'Gagal memperbarui data loyalitas.';
             }
-            header('Location: index.php?page=manager_dashboard&action=kelola_loyalitas');
+            header('Location: index.php?page=manager_dashboard&action=data_loyalitas');
             exit;
         }
     }
@@ -84,7 +84,7 @@ class LoyalController {
                 $_SESSION['error'] = 'Gagal menghapus data loyalitas. Kemungkinan data sedang digunakan pelanggan.';
             }
         }
-        header('Location: index.php?page=manager_dashboard&action=kelola_loyalitas');
+        header('Location: index.php?page=manager_dashboard&action=data_loyalitas');
         exit;
     }
 }

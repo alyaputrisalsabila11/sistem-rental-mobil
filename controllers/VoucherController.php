@@ -47,7 +47,7 @@ class VoucherController {
 
             if ($success) {
                 $_SESSION['success'] = 'Voucher baru berhasil diterbitkan!';
-                header('Location: index.php?page=manager_dashboard&action=kelola_voucher');
+                header('Location: index.php?page=manager_dashboard&action=data_voucher');
             } else {
                 $_SESSION['error'] = 'Gagal menambahkan voucher. Kode voucher mungkin sudah ada.';
                 header('Location: index.php?page=manager_dashboard&action=buat_voucher');
@@ -80,7 +80,7 @@ class VoucherController {
 
             if ($success) {
                 $_SESSION['success'] = 'Data voucher berhasil diperbarui!';
-                header('Location: index.php?page=manager_dashboard&action=kelola_voucher');
+                header('Location: index.php?page=manager_dashboard&action=data_voucher');
             } else {
                 $_SESSION['error'] = 'Gagal memperbarui data voucher.';
                 header('Location: index.php?page=manager_dashboard&action=edit_voucher&id=' . $id_voucher);
@@ -101,7 +101,7 @@ class VoucherController {
         } else {
             $_SESSION['error'] = 'ID voucher tidak valid.';
         }
-        header('Location: index.php?page=manager_dashboard&action=kelola_voucher');
+        header('Location: index.php?page=manager_dashboard&action=data_voucher');
         exit;
     }
 
