@@ -12,7 +12,7 @@ class LoyalModel {
     public function createLoyal($data) {
         try {
             // Kolom 'aktif' diganti menjadi 'status' sesuai tabel baru
-            $sql = "INSERT INTO loyalitas (nama_level, syarat, poin, keterangan, status) 
+            $sql = "INSERT INTO loyalitas (nama_level, syarat, poin, keterangan, status)
                     VALUES (:nama_level, :syarat, :poin, :keterangan, :status)";
             $stmt = $this->db->prepare($sql);
             

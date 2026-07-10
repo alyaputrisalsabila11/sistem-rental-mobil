@@ -17,11 +17,6 @@ class KaryawanController {
         $this->karyawanModel = new KaryawanModel();
     }
 
-    // Menampilkan Form Tambah Karyawan
-    public function create() {
-
-    }
-
     // FUNGSI BARU: Memproses update data dari form edit
     public function update() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
