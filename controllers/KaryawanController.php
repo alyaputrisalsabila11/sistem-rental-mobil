@@ -61,7 +61,7 @@ class KaryawanController {
     }
 
     // Memproses Penyimpanan Data Karyawan Baru
-    public function store() {
+   public function store() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $nama_karyawan    = isset($_POST['nama_karyawan']) ? trim($_POST['nama_karyawan']) : '';
             $email            = isset($_POST['email']) ? trim($_POST['email']) : '';
@@ -94,7 +94,8 @@ class KaryawanController {
 
             if ($success) {
                 $_SESSION['success'] = 'Akun karyawan baru berhasil dibuat!';
-                header('Location: index.php?page=manager_dashboard');
+                // Redirect ke halaman data karyawan untuk melihat hasil simpan
+                header('Location: index.php?page=manager_dashboard&action=data_karyawan');
             } else {
                 $_SESSION['error'] = 'Gagal menambahkan karyawan. Email mungkin sudah terdaftar.';
                 header('Location: index.php?page=manager_dashboard&action=buat_akun');

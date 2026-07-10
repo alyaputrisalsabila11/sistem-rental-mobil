@@ -24,11 +24,12 @@ class LoyalController {
 
             if ($this->loyalModel->createLoyal($data)) {
                 $_SESSION['success'] = "Level loyalitas berhasil dibuat!";
+                // Setelah berhasil, arahkan ke menu DATA Loyalitas
+                header('Location: index.php?page=manager_dashboard&action=data_loyalitas');
             } else {
                 $_SESSION['error'] = "Gagal membuat level loyalitas.";
+                header('Location: index.php?page=manager_dashboard&action=buat_loyal');
             }
-            
-            header('Location: index.php?page=manager_dashboard&action=buat_loyal');
             exit;
         }
     }

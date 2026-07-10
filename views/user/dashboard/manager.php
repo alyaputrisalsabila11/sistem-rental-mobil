@@ -185,57 +185,65 @@
 <!-- KARYAWAN -->
 <?php elseif ($action === 'buat_akun'): ?>
                 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="flex justify-center">
                     
-                    <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm h-fit">
-                        <h2 class="text-lg font-bold text-gray-800 border-b pb-3 mb-4 flex items-center space-x-2">
-                        <span>Registrasi Karyawan</span>
+                    <div class="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm w-full max-w-2xl h-fit">
+                        <h2 class="text-lg font-bold text-gray-800 border-b pb-3 mb-6 flex items-center space-x-2">
+                        <span>Registrasi Karyawan Baru</span>
                         </h2>
                         
                         <form action="index.php?page=karyawan_proses_tambah" method="POST" class="space-y-4">
                             <div>
                                 <label class="block text-xs font-bold text-gray-600 mb-1">Nama Lengkap</label>
-                                <input type="text" name="nama_karyawan" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                                <input type="text" name="nama_karyawan" required class="w-full border p-2.5 rounded-lg text-sm focus:outline-indigo-500">
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-600 mb-1">Email Resmi</label>
+                                    <input type="email" name="email" required class="w-full border p-2.5 rounded-lg text-sm focus:outline-indigo-500" placeholder="budi@rentcar.com">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-600 mb-1">No. Telp</label>
+                                    <input type="text" name="no_telp" class="w-full border p-2.5 rounded-lg text-sm focus:outline-indigo-500">
+                                </div>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-1">Email Resmi</label>
-                                <input type="email" name="email" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500" placeholder="budi@rentcar.com">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-1">Cabang / Lokasi</label>
-                                <select name="id_lokasi" required class="w-full border p-2 rounded-lg text-sm bg-white focus:outline-indigo-500">
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Cabang / Lokasi Penempatan</label>
+                                <select name="id_lokasi" required class="w-full border p-2.5 rounded-lg text-sm bg-white focus:outline-indigo-500">
                                     <option value="">-- Pilih Cabang --</option>
-                                    <?php if (!empty($daftarLokasi)): ?>
+                                    <?php 
+                                    $daftarLokasi = (new LokasiModel())->getAllLokasi();
+                                    if (!empty($daftarLokasi)): 
+                                    ?>
                                     <?php foreach ($daftarLokasi as $lokasi): ?>
                                         <option value="<?= htmlspecialchars($lokasi['id_lokasi']); ?>"><?= htmlspecialchars($lokasi['nama_lokasi'] . ' - ' . $lokasi['kota']); ?></option>
                                     <?php endforeach; ?>
                                     <?php endif; ?>
                                 </select>
                             </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-1">No. Telp</label>
-                                <input type="text" name="no_telp" class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-1">Password Sementara</label>
-                                <input type="password" name="password" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-1">Jabatan / Role</label>
-                                <select name="role" required class="w-full border p-2 rounded-lg text-sm bg-white focus:outline-indigo-500">
-                                    <option value="Manager">Manager</option>
-                                    <option value="Staff Admin">Staff Admin</option>
-                                    <option value="Staff Lapangan">Staff Lapangan</option>
-                                </select>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-600 mb-1">Password Sementara</label>
+                                    <input type="password" name="password" required class="w-full border p-2.5 rounded-lg text-sm focus:outline-indigo-500">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-600 mb-1">Jabatan / Role</label>
+                                    <select name="role" required class="w-full border p-2.5 rounded-lg text-sm bg-white focus:outline-indigo-500">
+                                        <option value="Manager">Manager</option>
+                                        <option value="Staff Admin">Staff Admin</option>
+                                        <option value="Staff Lapangan">Staff Lapangan</option>
+                                    </select>
+                                </div>
                             </div>
                             
                             <input type="hidden" name="status_karyawan" value="Aktif">
                             
-                            <button type="submit" class="w-full py-2.5 bg-[#6347C7] hover:bg-[#5239a7] text-white text-sm font-bold rounded-xl shadow-sm transition">
+                            <button type="submit" class="w-full py-3 bg-[#6347C7] hover:bg-[#5239a7] text-white text-sm font-bold rounded-xl shadow-sm transition mt-4">
                                 Simpan Akun Baru
                             </button>
                         </form>
                     </div>
+                </div>
 
                     <div class="lg:col-span-2 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
                         <h2 class="text-lg font-bold text-gray-800 border-b pb-3 mb-4 flex items-center space-x-2">

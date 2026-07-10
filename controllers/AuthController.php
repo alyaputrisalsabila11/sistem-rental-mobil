@@ -76,7 +76,7 @@ class AuthController {
         return;
     }
 
-    include __DIR__ . '/../views/public /login.php';
+    include __DIR__ . '/../views/public/login.php';
 }
     // Halaman Register
     public function register() {
