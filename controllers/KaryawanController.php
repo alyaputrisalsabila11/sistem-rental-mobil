@@ -17,10 +17,12 @@ class KaryawanController {
         $this->karyawanModel = new KaryawanModel();
     }
 
-    // FUNGSI BARU: Memproses update data dari form edit
+    // Memproses update data dari form edit
     public function update() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id_karyawan = $_POST['id_karyawan'];
+            
+            // DISESUAIKAN: Menangkap data alamat, no_ktp, dan status_supir dari form edit
             $data = [
                 'nama_karyawan'   => trim($_POST['nama_karyawan']),
                 'email'           => trim($_POST['email']),
@@ -28,6 +30,9 @@ class KaryawanController {
                 'role'            => trim($_POST['role']),
                 'status_karyawan' => trim($_POST['status_karyawan']),
                 'id_lokasi'       => trim($_POST['id_lokasi']),
+                'alamat'          => isset($_POST['alamat']) ? trim($_POST['alamat']) : '',
+                'no_ktp'          => isset($_POST['no_ktp']) ? trim($_POST['no_ktp']) : '',
+                'status_supir'    => isset($_POST['status_supir']) ? trim($_POST['status_supir']) : '',
                 'password'        => !empty($_POST['password']) ? trim($_POST['password']) : null
             ];
 
@@ -41,7 +46,7 @@ class KaryawanController {
         }
     }
 
-    // FUNGSI BARU: Memproses aksi hapus karyawan
+    // Memproses aksi hapus karyawan
     public function delete() {
         $id = $_GET['id'] ?? null;
         if ($id) {
@@ -56,19 +61,24 @@ class KaryawanController {
     }
 
     // Memproses Penyimpanan Data Karyawan Baru
-   public function store() {
+    public function store() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $nama_karyawan    = isset($_POST['nama_karyawan']) ? trim($_POST['nama_karyawan']) : '';
             $email            = isset($_POST['email']) ? trim($_POST['email']) : '';
-            $id_lokasi        = isset($_POST['id_lokasi']) ? trim($_POST['id_lokasi']) : ''; // <-- TAMBAHKAN INI
+            $id_lokasi        = isset($_POST['id_lokasi']) ? trim($_POST['id_lokasi']) : ''; 
             $no_telp          = isset($_POST['no_telp']) ? trim($_POST['no_telp']) : '';
             $password         = isset($_POST['password']) ? trim($_POST['password']) : '';
             $role             = isset($_POST['role']) ? trim($_POST['role']) : '';
             $status_karyawan  = isset($_POST['status_karyawan']) ? trim($_POST['status_karyawan']) : 'Aktif';
+            
+            // BARU: Menangkap input baru dari form tambah data
+            $alamat           = isset($_POST['alamat']) ? trim($_POST['alamat']) : '';
+            $no_ktp           = isset($_POST['no_ktp']) ? trim($_POST['no_ktp']) : '';
+            $status_supir     = isset($_POST['status_supir']) ? trim($_POST['status_supir']) : '';
 
-            // Validasi sederhana (id_lokasi dimasukkan ke dalam pengecekan kosong)
-            if (empty($nama_karyawan) || empty($email) || empty($id_lokasi) || empty($password) || empty($role)) {
-                $_SESSION['error'] = 'Semua field wajib diisi!';
+            // Validasi field utama yang wajib diisi
+            if (empty($nama_karyawan) || empty($email) || empty($password) || empty($role)) {
+                $_SESSION['error'] = 'Nama, Email, Password, dan Role wajib diisi!';
                 header('Location: index.php?page=manager_dashboard&action=buat_akun');
                 exit;
             }
@@ -76,20 +86,22 @@ class KaryawanController {
             // Hash password secara aman
             $hashed_password = password_hash($password, PASSWORD_BCRYPT);
 
-            // Simpan ke database via model
+            // Simpan ke database via model dengan menyertakan data baru
             $success = $this->karyawanModel->createKaryawan([
                 'nama_karyawan'   => $nama_karyawan,
                 'email'           => $email,
-                'id_lokasi'       => $id_lokasi, // <-- PASTIKAN DIKIRIM KE MODEL
+                'id_lokasi'       => $id_lokasi,
                 'no_telp'         => $no_telp,
                 'password'        => $hashed_password,
                 'role'            => $role,
-                'status_karyawan' => $status_karyawan
+                'status_karyawan' => $status_karyawan,
+                'alamat'          => $alamat,
+                'no_ktp'          => $no_ktp,
+                'status_supir'    => $status_supir
             ]);
 
             if ($success) {
                 $_SESSION['success'] = 'Akun karyawan baru berhasil dibuat!';
-                // Redirect ke halaman data karyawan untuk melihat hasil simpan
                 header('Location: index.php?page=manager_dashboard&action=data_karyawan');
             } else {
                 $_SESSION['error'] = 'Gagal menambahkan karyawan. Email mungkin sudah terdaftar.';

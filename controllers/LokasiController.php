@@ -8,10 +8,6 @@ class LokasiController {
         $this->lokasiModel = new LokasiModel();
     }
 
-    public function create() {
-        
-    }
-
     public function store() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data = [

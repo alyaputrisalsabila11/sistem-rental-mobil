@@ -8,35 +8,21 @@ class VoucherModel {
         $this->db = Database::getConnection();
     }
 
-    // Fungsi untuk menambah voucher baru (Disesuaikan dengan Schema Baru)
+    // Fungsi menambah voucher baru
     public function createVoucher($data) {
         try {
-            // Query disesuaikan dengan gambar DB baru: kuota & tipe_potongan dihapus
-            $sql = "INSERT INTO voucher (id_level, nama_voucher, harga_poin, diskon_potongan, nilai_potongan, tgl_berlaku_mulai, tgl_berlaku_selesai, status) 
-                    VALUES (:id_level, :nama_voucher, :harga_poin, :diskon_potongan, :nilai_potongan, :tgl_berlaku_mulai, :tgl_berlaku_selesai, :status)";
+            $sql = "INSERT INTO voucher (id_level, kode_voucher, nama_voucher, diskon_persen, kuota, tgl_berlaku, status) 
+                    VALUES (:id_level, :kode_voucher, :nama_voucher, :diskon_persen, :kuota, :tgl_berlaku, :status)";
             
             $stmt = $this->db->prepare($sql);
-
-            // =========================================================================
-            // LOGIKA OTOMATIS DI MODEL:
-            // Ambil input angka diskon (misal 10), lalu hitung desimalnya untuk nilai_potongan
-            // =========================================================================
-            $diskonInt = isset($data['diskon_potongan']) ? intval($data['diskon_potongan']) : 0;
-            $nilaiDecimal = $diskonInt / 100; // Logika pembagian 100 masuk di sini
-
-            // Harmonisasi status ENUM agar otomatis lowercase mengikuti aturan DB ('aktif' / 'inaktif')
-            $statusInput = strtolower($data['status'] ?? 'aktif');
-            $statusFinal = ($statusInput === 'aktif' || $statusInput === 'inaktif') ? $statusInput : 'aktif';
-
             return $stmt->execute([
-                ':id_level'            => $data['id_level'], 
-                ':nama_voucher'        => $data['nama_voucher'],
-                ':harga_poin'          => $data['harga_poin'],
-                ':diskon_potongan'     => $diskonInt,     // Masuk ke kolom int(11) -> 10
-                ':nilai_potongan'      => $nilaiDecimal,   // Masuk ke kolom decimal(10,2) -> 0.10
-                ':tgl_berlaku_mulai'   => $data['tgl_berlaku_mulai'],
-                ':tgl_berlaku_selesai' => $data['tgl_berlaku_selesai'],
-                ':status'              => $statusFinal
+                ':id_level'       => !empty($data['id_level']) ? $data['id_level'] : null,
+                ':kode_voucher'   => $data['kode_voucher'],
+                ':nama_voucher'   => $data['nama_voucher'],
+                ':diskon_persen'  => $data['diskon_persen'],
+                ':kuota'          => $data['kuota'],
+                ':tgl_berlaku'    => $data['tgl_berlaku'],
+                ':status'         => !empty($data['status']) ? $data['status'] : 'Aktif'
             ]);
         } catch (Exception $e) {
             error_log("Error di createVoucher: " . $e->getMessage());
@@ -44,16 +30,69 @@ class VoucherModel {
         }
     }
 
-    // Fungsi untuk mengambil semua data voucher
+    // Mengambil semua data voucher (di-JOIN dengan tabel loyalitas/loyalitas untuk tahu khusus level apa)
     public function getAllVoucher() {
         try {
-            $sql = "SELECT * FROM voucher ORDER BY id_voucher DESC";
+            $sql = "SELECT v.*, l.nama_level 
+                    FROM voucher v
+                    LEFT JOIN loyalitas l ON v.id_level = l.id_level
+                    ORDER BY v.id_voucher DESC";
             $stmt = $this->db->prepare($sql);
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
             error_log("Error di getAllVoucher: " . $e->getMessage());
             return [];
+        }
+    }
+
+    // Mengambil satu data voucher berdasarkan ID
+    public function getVoucherById($id) {
+        try {
+            $sql = "SELECT * FROM voucher WHERE id_voucher = ?";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$id]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("Error di getVoucherById: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    // Memperbarui data voucher
+    public function updateVoucher($id, $data) {
+        try {
+            $sql = "UPDATE voucher
+                    SET id_level = :id_level, kode_voucher = :kode_voucher, nama_voucher = :nama_voucher, 
+                        diskon_persen = :diskon_persen, kuota = :kuota, tgl_berlaku = :tgl_berlaku, status = :status 
+                    WHERE id_voucher = :id_voucher";
+            
+            $stmt = $this->db->prepare($sql);
+            return $stmt->execute([
+                ':id_level'      => !empty($data['id_level']) ? $data['id_level'] : null,
+                ':kode_voucher'  => $data['kode_voucher'],
+                ':nama_voucher'  => $data['nama_voucher'],
+                ':diskon_persen' => $data['diskon_persen'],
+                ':kuota'         => $data['kuota'],
+                ':tgl_berlaku'   => $data['tgl_berlaku'],
+                ':status'        => $data['status'],
+                ':id_voucher'    => $id
+            ]);
+        } catch (Exception $e) {
+            error_log("Error di updateVoucher: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    // Menghapus data voucher
+    public function deleteVoucher($id) {
+        try {
+            $sql = "DELETE FROM voucher WHERE id_voucher = ?";
+            $stmt = $this->db->prepare($sql);
+            return $stmt->execute([$id]);
+        } catch (Exception $e) {
+            error_log("Error di deleteVoucher: " . $e->getMessage());
+            return false;
         }
     }
 }

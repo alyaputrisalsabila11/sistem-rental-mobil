@@ -10,12 +10,11 @@ class KaryawanModel {
     }
 
     // Fungsi untuk membuat / mendaftarkan akun karyawan baru oleh Manager
-    // Fungsi untuk membuat / mendaftarkan akun karyawan baru oleh Manager
     public function createKaryawan($data) {
         try {
-            // PERBAIKAN: Ubah 'lokasi_id' menjadi 'id_lokasi' sesuai tabel karyawan
-            $sql = "INSERT INTO karyawan (nama_karyawan, email, no_telp, password, role, status_karyawan, id_lokasi, created_at, updated_at) 
-                    VALUES (:nama_karyawan, :email, :no_telp, :password, :role, :status_karyawan, :id_lokasi, NOW(), NOW())";
+            // DISESUAIKAN: Menambahkan kolom alamat, no_ktp, status_supir, dan mengubah updated_at menjadi update_at
+            $sql = "INSERT INTO karyawan (nama_karyawan, email, no_telp, password, role, status_karyawan, id_lokasi, alamat, no_ktp, status_supir, created_at, update_at) 
+                    VALUES (:nama_karyawan, :email, :no_telp, :password, :role, :status_karyawan, :id_lokasi, :alamat, :no_ktp, :status_supir, NOW(), NOW())";
             
             $stmt = $this->db->prepare($sql);
             
@@ -26,7 +25,10 @@ class KaryawanModel {
                 ':password'        => $data['password'],
                 ':role'            => $data['role'],
                 ':status_karyawan' => $data['status_karyawan'],
-                ':id_lokasi'       => $data['id_lokasi'] // <-- Sudah disesuaikan
+                ':id_lokasi'       => !empty($data['id_lokasi']) ? $data['id_lokasi'] : null,
+                ':alamat'          => $data['alamat'],
+                ':no_ktp'          => $data['no_ktp'],
+                ':status_supir'    => $data['status_supir']
             ]);
             return $success;
         } catch (Exception $e) {
@@ -37,8 +39,8 @@ class KaryawanModel {
     
     public function getAllKaryawan() {
         try {
-            // PERBAIKAN: Sesuaikan relasi JOIN menggunakan k.id_lokasi = l.id_lokasi
-            $sql = "SELECT k.id_karyawan, k.nama_karyawan, k.email, k.role, k.status_karyawan, l.nama_lokasi 
+            // Tetap mempertahankan join ke tabel lokasi, namun mengambil field baru jika dibutuhkan di view
+            $sql = "SELECT k.id_karyawan, k.nama_karyawan, k.email, k.no_telp, k.role, k.status_karyawan, k.alamat, k.no_ktp, k.status_supir, l.nama_lokasi 
                     FROM karyawan k
                     LEFT JOIN lokasi l ON k.id_lokasi = l.id_lokasi
                     ORDER BY k.id_karyawan DESC";
@@ -46,7 +48,6 @@ class KaryawanModel {
             $stmt->execute();
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            // Kita kembalikan log error ke bentuk semula agar aman
             error_log("Error saat getAllKaryawan: " . $e->getMessage());
             return [];
         }
@@ -69,7 +70,7 @@ class KaryawanModel {
         }
     }
 
-    // FUNGSI BARU: Mengambil 1 data karyawan spesifik berdasarkan ID untuk form edit
+    // Mengambil 1 data karyawan spesifik berdasarkan ID untuk form edit
     public function getKaryawanById($id) {
         try {
             $sql = "SELECT * FROM karyawan WHERE id_karyawan = ?";
@@ -82,14 +83,14 @@ class KaryawanModel {
         }
     }
 
-    // FUNGSI BARU: Menyimpan perubahan data karyawan
+    // Menyimpan perubahan data karyawan
     public function updateKaryawan($id, $data) {
         try {
-            // Jika password diisi baru, ikut di-update. Jika kosong, pakai password lama.
+            // DISESUAIKAN: Mengubah nama kolom timestamp ke update_at dan menyertakan data alamat, no_ktp, status_supir
             if (!empty($data['password'])) {
-                $sql = "UPDATE karyawan SET nama_karyawan = :nama_karyawan, email = :email, no_telp = :no_telp, password = :password, role = :role, status_karyawan = :status_karyawan, id_lokasi = :id_lokasi, updated_at = NOW() WHERE id_karyawan = :id_karyawan";
+                $sql = "UPDATE karyawan SET nama_karyawan = :nama_karyawan, email = :email, no_telp = :no_telp, password = :password, role = :role, status_karyawan = :status_karyawan, id_lokasi = :id_lokasi, alamat = :alamat, no_ktp = :no_ktp, status_supir = :status_supir, update_at = NOW() WHERE id_karyawan = :id_karyawan";
             } else {
-                $sql = "UPDATE karyawan SET nama_karyawan = :nama_karyawan, email = :email, no_telp = :no_telp, role = :role, status_karyawan = :status_karyawan, id_lokasi = :id_lokasi, updated_at = NOW() WHERE id_karyawan = :id_karyawan";
+                $sql = "UPDATE karyawan SET nama_karyawan = :nama_karyawan, email = :email, no_telp = :no_telp, role = :role, status_karyawan = :status_karyawan, id_lokasi = :id_lokasi, alamat = :alamat, no_ktp = :no_ktp, status_supir = :status_supir, update_at = NOW() WHERE id_karyawan = :id_karyawan";
             }
 
             $stmt = $this->db->prepare($sql);
@@ -100,7 +101,10 @@ class KaryawanModel {
                 ':no_telp'         => $data['no_telp'],
                 ':role'            => $data['role'],
                 ':status_karyawan' => $data['status_karyawan'],
-                ':id_lokasi'       => $data['id_lokasi'],
+                ':id_lokasi'       => !empty($data['id_lokasi']) ? $data['id_lokasi'] : null,
+                ':alamat'          => $data['alamat'],
+                ':no_ktp'          => $data['no_ktp'],
+                ':status_supir'    => $data['status_supir'],
                 ':id_karyawan'     => $id
             ];
             
@@ -115,7 +119,7 @@ class KaryawanModel {
         }
     }
 
-    // FUNGSI BARU: Menghapus data karyawan
+    // Menghapus data karyawan
     public function deleteKaryawan($id) {
         try {
             $sql = "DELETE FROM karyawan WHERE id_karyawan = ?";
