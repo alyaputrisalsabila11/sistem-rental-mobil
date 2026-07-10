@@ -23,8 +23,8 @@ class KaryawanModel {
                 ':nama_karyawan'   => $data['nama_karyawan'],
                 ':email'           => $data['email'],
                 ':no_telp'         => $data['no_telp'],
-                ':password'        => $data['password'], 
-                ':role'            => $data['role'],    
+                ':password'        => $data['password'],
+                ':role'            => $data['role'],
                 ':status_karyawan' => $data['status_karyawan'],
                 ':id_lokasi'       => $data['id_lokasi'] // <-- Sudah disesuaikan
             ]);

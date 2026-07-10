@@ -48,7 +48,7 @@ switch ($page) {
         (new LokasiController())->delete();
         break;
     case 'karyawan_tambah':
-        (new KaryawanController())->create();
+        (new KaryawanController())->store();
         break;
     case 'karyawan_proses_tambah':
         (new KaryawanController())->store();
