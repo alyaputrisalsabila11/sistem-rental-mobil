@@ -5,16 +5,25 @@ class KaryawanController {
     private $karyawanModel;
 
     public function __construct() {
-        // Proteksi: Pastikan hanya yang rolenya 'Manager' yang bisa akses controller ini
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Manager') {
-            $_SESSION['error'] = 'Akses ditolak! Fitur ini khusus Manager.';
-            header('Location: index.php?page=login');
-            exit;
-        }
-        $this->karyawanModel = new KaryawanModel();
+    if (session_status() === PHP_SESSION_NONE) { session_start(); }
+    
+    // Izinkan Manager, Staff Admin, dan Staff Lapangan menggunakan controller ini
+    $allowedRoles = ['Manager', 'Staff Admin', 'Staff Lapangan'];
+    if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], $allowedRoles)) {
+        header('Location: index.php?page=login');
+        exit;
+    }
+    $this->karyawanModel = new KaryawanModel();
+}
+
+    // FUNGSI BARU: Mengambil jumlah tugas untuk ditampilkan di card dashboard staff
+    public function getCountTugas() {
+        return $this->karyawanModel->getTugasCount();
+    }
+
+    // FUNGSI BARU: Mengambil tugas spesifik untuk karyawan yang sedang login
+    public function getMyTasks($id_karyawan) {
+        return $this->karyawanModel->getTasksByKaryawan($id_karyawan);
     }
 
     // FUNGSI BARU: Memproses update data dari form edit

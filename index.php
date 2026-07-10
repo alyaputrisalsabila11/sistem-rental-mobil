@@ -71,6 +71,37 @@ switch ($page) {
     case 'voucher_proses_tambah':
         (new VoucherController())->store();
         break;
+    // Tambahkan case ini agar redirect dari controller tidak layar putih
+    case 'staffadmin_dashboard':
+        include 'views/user/dashboard/staffadmin.php';
+        break;
+
+    case 'Admin':
+        $controller = new AdminController();
+        $action = $_GET['action'] ?? '';
+        
+        if ($action === 'proses_tambah_mobil') {
+            $controller->proses_tambah_mobil();
+        } elseif ($action === 'proses_tambah_fasilitas') {
+            $controller->proses_tambah_fasilitas();
+        } else {
+            // Jika tidak ada action, arahkan ke dashboard agar tidak layar putih
+            include 'views/user/dashboard/staffadmin.php';
+        }
+        break;
+
+    case 'home_lapangan':
+        include 'views/user/dashboard/stafflapangan.php';
+        break;
+    case 'home':
+        include 'views/user/dashboard/pelanggan.php';
+        break;
+    case 'gallery':
+        include 'views/user/dashboard/pelanggan.php'; // Digabung di file yang sama dengan parameter action
+        break;
+    case 'proses_sewa':
+        (new SewaController())->store();
+        break;
 
     default:
         include 'views/public/landing.php';

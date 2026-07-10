@@ -11,7 +11,8 @@ class PelangganModel {
     // Cek email sudah terdaftar
     public function emailExists($email) {
         try {
-            $stmt = $this->db->prepare("SELECT id FROM pelanggan WHERE email = ?");
+            // PERBAIKAN: Nama kolom disesuaikan menjadi id_pelanggan
+            $stmt = $this->db->prepare("SELECT id_pelanggan FROM pelanggan WHERE email = ?");
             $stmt->execute([$email]);
             return $stmt->rowCount() > 0;
         } catch (PDOException $e) {
@@ -23,7 +24,8 @@ class PelangganModel {
     // Cek username sudah terdaftar
     public function usernameExists($username) {
         try {
-            $stmt = $this->db->prepare("SELECT id FROM pelanggan WHERE username = ?");
+            // PERBAIKAN: Nama kolom disesuaikan menjadi id_pelanggan
+            $stmt = $this->db->prepare("SELECT id_pelanggan FROM pelanggan WHERE username = ?");
             $stmt->execute([$username]);
             return $stmt->rowCount() > 0;
         } catch (PDOException $e) {
@@ -56,10 +58,11 @@ class PelangganModel {
         }
     }
 
-    // Ambil user berdasarkan ID (Disesuaikan ke kolom 'id')
+    // Ambil user berdasarkan ID (Disesuaikan ke kolom 'id_pelanggan')
     public function getUserById($id) {
         try {
-            $stmt = $this->db->prepare("SELECT * FROM pelanggan WHERE id = ?");
+            // PERBAIKAN: Nama kolom disesuaikan menjadi id_pelanggan
+            $stmt = $this->db->prepare("SELECT * FROM pelanggan WHERE id_pelanggan = ?");
             $stmt->execute([$id]);
             return $stmt->fetch(PDO::FETCH_ASSOC);
         } catch (PDOException $e) {
@@ -89,25 +92,31 @@ class PelangganModel {
         }
     }
 
-    public function getAllPelanggan() {
+   public function getAllPelanggan() {
         try {
-            $sql = "SELECT id, nama_lengkap, username, email, no_telp, alamat FROM pelanggan ORDER BY id DESC";
-            $stmt = $this->db->prepare($sql);
-            $stmt->execute();
+            // Kita coba LEFT JOIN untuk mendapatkan nama levelnya
+            // Menggunakan query() langsung agar lebih stabil untuk SELECT statis
+            $sql = "SELECT p.*, l.nama_level 
+                    FROM pelanggan p 
+                    LEFT JOIN loyal l ON p.id_level = l.id_level 
+                    ORDER BY p.id_pelanggan DESC";
+            $stmt = $this->db->query($sql);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         } catch (Exception $e) {
-            error_log("Error saat getAllPelanggan: " . $e->getMessage());
-            return [];
+            // FALLBACK: Jika tabel loyal bermasalah, ambil data pelanggan saja agar tetap muncul di dashboard
+            $stmt = $this->db->query("SELECT * FROM pelanggan ORDER BY id_pelanggan DESC");
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
     }
 
 
-    // Update profil user (Disesuaikan ke kolom 'id')
+    // Update profil user (Disesuaikan ke kolom 'id_pelanggan')
     public function updateUser($id, $nama_lengkap, $no_telp, $alamat) {
         try {
+            // PERBAIKAN: Nama kolom disesuaikan menjadi id_pelanggan
             $stmt = $this->db->prepare(
                 "UPDATE pelanggan SET nama_lengkap = ?, no_telp = ?, alamat = ? 
-                 WHERE id = ?"
+                 WHERE id_pelanggan = ?"
             );
             return $stmt->execute([$nama_lengkap, $no_telp, $alamat, $id]);
         } catch (PDOException $e) {
