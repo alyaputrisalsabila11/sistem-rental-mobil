@@ -667,7 +667,7 @@
             </div>
             
 <?php elseif ($action === 'data_voucher'): ?>
-<div class="lg:col-span-2 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+<div class="w-full bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
     <h2 class="text-lg font-bold text-gray-800 border-b pb-3 mb-4 flex items-center space-x-2">
         <span>🎟️</span> <span>Daftar Voucher</span>
     </h2>
