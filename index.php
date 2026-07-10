@@ -85,18 +85,8 @@ switch ($page) {
     case 'voucher_proses_tambah':
         (new VoucherController())->store();
         break;
-    case 'voucher_proses_edit':
-        (new VoucherController())->update();
-        break;
-    case 'voucher_hapus':
-        (new VoucherController())->delete();
-        break;
-
+    // Tambahkan case ini agar redirect dari controller tidak layar putih
     case 'staffadmin_dashboard':
-        include 'views/user/dashboard/staffadmin.php';
-        break;
-
-            case 'staffadmin_dashboard':
         include 'views/user/dashboard/staffadmin.php';
         break;
 

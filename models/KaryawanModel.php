@@ -130,4 +130,43 @@ class KaryawanModel {
             return false;
         }
     }
+
+    // FUNGSI BARU: Mengambil jadwal tugas (Sopir & Pengecekan) untuk karyawan tertentu
+    public function getTasksByKaryawan($id_karyawan) {
+        try {
+            // Kita ambil data dari penyewaan yang statusnya Confirmed (perlu diantar/dicek)
+            // Catatan: Jika di tabel penyewaan belum ada id_karyawan, 
+            // kita asumsikan karyawan melihat semua mobil di lokasinya yang perlu dicek.
+            $sql = "SELECT s.*, m.merk_mobil, m.plat_nomor, p.nama_pelanggan, l.nama_lokasi
+                    FROM penyewaan s
+                    JOIN mobil m ON s.id_mobil = m.id_mobil
+                    JOIN pelanggan p ON s.id_pelanggan = p.id_pelanggan
+                    JOIN karyawan k ON k.id_lokasi = m.id_lokasi 
+                    LEFT JOIN lokasi l ON m.id_lokasi = l.id_lokasi
+                    WHERE k.id_karyawan = ? AND s.status_penyewaan IN ('Confirmed', 'In-Use')
+                    ORDER BY s.tgl_mulai_sewa ASC";
+            
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$id_karyawan]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("Error di getTasksByKaryawan: " . $e->getMessage());
+            return [];
+        }
+    }
+
+    // FUNGSI BARU: Menghitung jumlah jadwal pengecekan/tugas sopir
+    public function getTugasCount() {
+        try {
+            // Kita hitung penyewaan yang statusnya Confirmed (perlu serah terima) atau In-Use (perlu pengembalian)
+            $sql = "SELECT COUNT(*) as total FROM penyewaan WHERE status_penyewaan IN ('Confirmed', 'In-Use')";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute();
+            $res = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $res['total'] ?? 0;
+        } catch (Exception $e) {
+            error_log("Error di getTugasCount: " . $e->getMessage());
+            return 0;
+        }
+    }
 }

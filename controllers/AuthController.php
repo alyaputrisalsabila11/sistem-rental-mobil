@@ -32,14 +32,17 @@ class AuthController {
         if ($user && password_verify($password, $user['password'])) {
             // Jika ketemu di tabel pelanggan, otomatis dia adalah Pelanggan
             unset($_SESSION['error']);
-            $_SESSION['user_id'] = $user['id'];
+            
+            // PERBAIKAN: Gunakan id_pelanggan sesuai struktur database Anda
+            $_SESSION['user_id'] = $user['id_pelanggan']; 
+            
             $_SESSION['user_name'] = $user['nama_lengkap'];
             $_SESSION['user_email'] = $user['email'];
             $_SESSION['role'] = 'pelanggan';
             $_SESSION['id_level'] = $user['id_level'];
 
             session_write_close();
-            header('Location: index.php?page=home');
+            header('Location: index.php?page=home_pelanggan');
             exit;
         }
 
@@ -54,11 +57,9 @@ class AuthController {
                 $_SESSION['user_name'] = $karyawan['nama_karyawan']; // Pastikan mengambil nama_karyawan
                 
                 // Ambil role OTOMATIS dari kolom 'role' di tabel karyawan
-                $_SESSION['role'] = $karyawan['role']; 
+               $_SESSION['role'] = $karyawan['role']; 
 
-                session_write_close();
-
-                // Cek jika rolenya adalah Manager (Sesuai ENUM database dengan M kapital)
+                // PERBAIKAN: Pastikan redirect menuju 'Admin' sesuai dengan case di index.php
                 if ($_SESSION['role'] === 'Manager') {
                     header('Location: index.php?page=manager_dashboard');
                 } elseif ($_SESSION['role'] === 'Staff Admin') {
