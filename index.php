@@ -1,17 +1,19 @@
 <?php
+// ==========================================
+// FILE: index.php (Pembaruan Router Utama)
+// ==========================================
+
 if (session_status() === PHP_SESSION_NONE) {
-    session_start();
+    session_start(); // Memulai sesi aplikasi secara global
 }
 
-// 1. PERBAIKAN: Autoloader otomatis mencari berkas Model & Controller berdasarkan nama class
+// Autoloader Otomatis Kelas Model & Controller
 spl_autoload_register(function ($class) {
-    // Array folder tempat menyimpan berkas class Anda
     $directories = [
         __DIR__ . '/controllers/',
         __DIR__ . '/models/',
-        __DIR__ . '/' // Untuk file root jika ada class di sana
+        __DIR__ . '/'
     ];
-    
     foreach ($directories as $dir) {
         $file = $dir . $class . '.php';
         if (file_exists($file)) {
@@ -21,14 +23,13 @@ spl_autoload_register(function ($class) {
     }
 });
 
-// Load init.php secara manual jika di dalamnya berisi konfigurasi database / helper non-class
 if (file_exists(__DIR__ . '/init.php')) {
-    require_once __DIR__ . '/init.php';
+    require_once __DIR__ . '/init.php'; // Memuat file database init jika ada
 }
 
-$page = $_GET['page'] ?? 'landing';
+$page = $_GET['page'] ?? 'landing'; // Default ke landing page
 
-// Proteksi Login
+// Proteksi Autentikasi Login Global
 if (!isset($_SESSION['user_id']) && !in_array($page, ['landing', 'login', 'register'])) {
     header('Location: index.php?page=login');
     exit;
@@ -41,14 +42,17 @@ switch ($page) {
     case 'register':
         (new AuthController())->register();
         break;
+    case 'logout':
+        (new AuthController())->logout();
+        break;
 
-    // ======== MANAGER DASHBOARD ========
+    // ======== ROUTE DASHBOARD MANAGER ========
     case 'manager_dashboard':
         $controller = new ManagerController();
         $controller->index();
         break;
 
-    // Kelola Lokasi
+    // ======== ROUTE PROSES CABANG/LOKASI (MANAGER) ========
     case 'lokasi_proses_tambah':
         (new LokasiController())->store();
         break;
@@ -59,7 +63,7 @@ switch ($page) {
         (new LokasiController())->delete();
         break;
 
-    // Kelola Karyawan
+    // ======== ROUTE PROSES KARYAWAN (MANAGER) ========
     case 'karyawan_proses_tambah':
         (new KaryawanController())->store();
         break;
@@ -70,7 +74,7 @@ switch ($page) {
         (new KaryawanController())->delete();
         break;
 
-    // Kelola Loyalitas (Sesuai dengan Model & Controller sebelumnya)
+    // ======== ROUTE PROSES LOYALITAS (MANAGER) ========
     case 'loyal_proses_tambah':
         (new LoyalController())->store();
         break;
@@ -81,15 +85,18 @@ switch ($page) {
         (new LoyalController())->delete();
         break;
 
-    // Kelola Voucher (Diselaraskan & Ditambahkan Rute Update/Delete)
+    // ======== ROUTE PROSES VOUCHER (MANAGER) ========
     case 'voucher_proses_tambah':
         (new VoucherController())->store();
         break;
-    // Tambahkan case ini agar redirect dari controller tidak layar putih
-    case 'staffadmin_dashboard':
-        include 'views/user/dashboard/staffadmin.php';
+    case 'voucher_proses_edit':
+        (new VoucherController())->update();
+        break;
+    case 'voucher_hapus':
+        (new VoucherController())->delete();
         break;
 
+    // ======== ROUTE DASHBOARD STAFF ADMIN & FORM ========
     case 'Admin':
         $controller = new AdminController();
         $action = $_GET['action'] ?? '';
@@ -98,21 +105,96 @@ switch ($page) {
             $controller->proses_tambah_mobil();
         } elseif ($action === 'proses_tambah_fasilitas') {
             $controller->proses_tambah_fasilitas();
+        } elseif ($action === 'proses_upgrade_loyalitas') {
+            // Logika admin melakukan upgrade manual tingkat loyalitas pelanggan
+            $db = Database::getConnection();
+            $id_pel = $_GET['id_pelanggan'];
+            $id_lev = $_GET['id_level'];
+            $stmt = $db->prepare("UPDATE pelanggan SET id_level = ? WHERE id_pelanggan = ?");
+            $stmt->execute([$id_lev, $id_pel]);
+            $_SESSION['success'] = "Tingkat loyalitas pelanggan berhasil ditingkatkan!";
+            header('Location: index.php?page=Admin&action=home');
         } else {
-            // Jika tidak ada action, arahkan ke dashboard agar tidak layar putih
-            include 'views/user/dashboard/staffadmin.php';
+            include 'views/user/dashboard/staffadmin.php'; // Load dashboard operasional admin
         }
         break;
 
+    // ======== ROUTE DASHBOARD STAFF LAPANGAN & PROSES TRANSAKSI ========
     case 'home_lapangan':
-        include 'views/user/dashboard/stafflapangan.php';
+        $action = $_GET['action'] ?? 'home';
+        $db = Database::getConnection();
+
+        if ($action === 'proses_handover') {
+            // Aksi menyerahkan kunci mobil kepada pelanggan
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $id_penyewaan = $_POST['id_penyewaan'];
+                $id_karyawan = $_SESSION['user_id'];
+                $id_lokasi = $_SESSION['id_lokasi'];
+                $tgl_serah = date('Y-m-d');
+                $jam_serah = date('H:i:s');
+
+                // Unggah berkas foto bukti serah terima mobil bersama pelanggan
+                $foto_bukti = "";
+                if (!empty($_FILES['bukti_serah']['name'])) {
+                    $foto_bukti = time() . "_" . $_FILES['bukti_serah']['name'];
+                    move_uploaded_file($_FILES['bukti_serah']['tmp_name'], "public/uploads/bukti_serah/" . $foto_bukti);
+                }
+
+                // Masukkan data ke tabel penyerahan
+                $stmt = $db->prepare("INSERT INTO penyerahan (id_penyewaan, id_karyawan, id_lokasi, tgl_penyerahan, jam_penyerahan, status_sewa) VALUES (?, ?, ?, ?, ?, 'ongoing')");
+                $stmt->execute([$id_penyewaan, $id_karyawan, $id_lokasi, $tgl_serah, $jam_serah]);
+
+                // Update status mobil menjadi 'Disewa' agar hilang dari gallery
+                $stmtMobil = $db->prepare("UPDATE mobil SET status = 'Disewa' WHERE id_mobil = (SELECT id_mobil FROM penyewaan WHERE id_penyewaan = ?)");
+                $stmtMobil->execute([$id_penyewaan]);
+
+                $_SESSION['success'] = "Mobil berhasil diserahterimakan! Status sewa sekarang: Ongoing.";
+                header('Location: index.php?page=home_lapangan&action=cek_kondisi');
+            }
+        } elseif ($action === 'proses_return') {
+            // Aksi penjemputan/kembalian mobil dari pelanggan ke lapangan
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                $id_penyerahan = $_POST['id_penyerahan'];
+                $id_karyawan = $_SESSION['user_id'];
+                $id_lokasi = $_SESSION['id_lokasi'];
+                $jam_kembali = date('H:i:s');
+                $km_akhir = $_POST['km_akhir'];
+                $bbm_akhir = $_POST['bbm_akhir'];
+                $kondisi = $_POST['kondisi_mobil'];
+                $catatan = $_POST['visual_notes']; // Berisi rangkuman kerusakan visual hasil klik diagram bodi
+                
+                // Kalkulasi otomatis denda kerusakan & denda telat
+                $id_kerusakan = $_POST['id_kerusakan'] != '0' ? $_POST['id_kerusakan'] : null;
+                $biaya_kerusakan = $_POST['biaya_kerusakan'];
+                $denda_telat = $_POST['denda_telat'];
+
+                // Insert ke tabel pengembalian
+                $stmt = $db->prepare("INSERT INTO pengembalian (id_penyerahan, id_kerusakan, id_lokasi, id_karyawan, tgl_dikembaliakan, jam_dikembalikan, km_akhir, bbm_akhir, kondisi_mobil, catatan, biaya_kerusakan, denda_telat) VALUES (?, ?, ?, ?, CURDATE(), ?, ?, ?, ?, ?, ?, ?)");
+                $stmt->execute([$id_penyerahan, $id_kerusakan, $id_lokasi, $id_karyawan, $jam_kembali, $km_akhir, $bbm_akhir, $kondisi, $catatan, $biaya_kerusakan, $denda_telat]);
+
+                // Update status sewa di penyerahan menjadi 'complete'
+                $stmtSewa = $db->prepare("UPDATE penyerahan SET status_sewa = 'complete' WHERE id_penyerahan = ?");
+                $stmtSewa->execute([$id_penyerahan]);
+
+                // Update status mobil ke 'Maintenance' jika rusak, atau 'Tersedia' jika baik
+                $status_baru = ($kondisi !== 'Baik') ? 'Maintenance' : 'Tersedia';
+                $stmtMobil = $db->prepare("UPDATE mobil SET status = ? WHERE id_mobil = (SELECT p.id_mobil FROM penyewaan p JOIN penyerahan pen ON p.id_penyewaan = pen.id_penyewaan WHERE pen.id_penyerahan = ?)");
+                $stmtMobil->execute([$status_baru, $id_penyerahan]);
+
+                $_SESSION['success'] = "Proses pengembalian berhasil dicatat!";
+                header('Location: index.php?page=home_lapangan&action=cek_kondisi');
+            }
+        } else {
+            include 'views/user/dashboard/stafflapangan.php';
+        }
         break;
+
+    // ======== ROUTE DASHBOARD PELANGGAN ========
+    case 'home_pelanggan':
     case 'home':
         include 'views/user/dashboard/pelanggan.php';
         break;
-    case 'gallery':
-        include 'views/user/dashboard/pelanggan.php'; // Digabung di file yang sama dengan parameter action
-        break;
+
     case 'proses_sewa':
         (new SewaController())->store();
         break;
@@ -121,3 +203,4 @@ switch ($page) {
         include 'views/public/landing.php';
         break;
 }
+?>

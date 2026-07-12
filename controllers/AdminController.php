@@ -1,13 +1,13 @@
 <?php
+// File: controllers/AdminController.php
+
 class AdminController {
     private $mobilModel;
     private $fasilitasModel;
 
     public function __construct() {
-        // Proteksi: Pastikan hanya Staff Admin yang bisa akses
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
         
-        // Sesuaikan dengan isi database: 'Staff Admin'
         if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Staff Admin') {
             header('Location: index.php?page=login');
             exit;
@@ -16,18 +16,18 @@ class AdminController {
         $this->fasilitasModel = new FasilitasModel();
     }
 
-    // Memproses form tambah mobil
+    // Memproses form tambah mobil baru oleh karyawan admin
     public function proses_tambah_mobil() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $nama_file = "";
+            $gambar_biner = null; // Default biner gambar kosong
             
-            // Logika upload gambar sederhana (ke folder mobil/)
-            if (!empty($_FILES['gambar']['name'])) {
-                $nama_file = time() . "_" . $_FILES['gambar']['name'];
-                // __DIR__ . "/../mobil/" berarti naik satu folder lalu cari folder mobil
-                move_uploaded_file($_FILES['gambar']['tmp_name'], __DIR__ . "/../../mobil/" . $nama_file);
+            // PERBAIKAN: Membaca file gambar sebagai data biner beneran agar cocok dengan kolom longblob database Anda
+            if (!empty($_FILES['gambar']['tmp_name'])) {
+                // Membaca konten file gambar menjadi data biner untuk disimpan langsung ke database
+                $gambar_biner = file_get_contents($_FILES['gambar']['tmp_name']);
             }
 
+            // Menyusun array parameter binding untuk query insert model
             $data = [
                 'nama_kategori' => $_POST['nama_kategori'],
                 'merk_mobil'    => $_POST['merk_mobil'],
@@ -36,13 +36,16 @@ class AdminController {
                 'harga_dinamis' => $_POST['harga_dinamis'],
                 'warna'         => $_POST['warna'],
                 'cc'            => $_POST['cc'],
-                'gambar'        => $nama_file,
-                'status_mobil'  => $_POST['status_mobil']
+                'gambar'        => $gambar_biner, // Data biner gambar dimasukkan ke placeholder :gambar
+                'status_mobil'  => $_POST['status_mobil'] // Memasukkan nilai status awal armada
             ];
 
+            // Panggil model untuk menyimpan data biner ke database
             if ($this->mobilModel->tambahMobil($data)) {
-                // Pindah ke halaman tabel data mobil
-                header('Location: index.php?page=staffadmin_dashboard&action=data_mobil');
+                // Redirect ke tabel data mobil
+                header('Location: index.php?page=Admin&action=data_mobil');
+            } else {
+                die("Gagal menyimpan data mobil biner.");
             }
             exit;
         }
@@ -60,10 +63,12 @@ class AdminController {
             ];
 
             if ($this->fasilitasModel->tambahFasilitas($data)) {
-                // Pindah ke halaman tabel data fasilitas
-                header('Location: index.php?page=staffadmin_dashboard&action=data_fasilitas');
+                header('Location: index.php?page=Admin&action=data_fasilitas');
+            } else {
+                die("Gagal menyimpan data fasilitas.");
             }
             exit;
         }
     }
 }
+?>
