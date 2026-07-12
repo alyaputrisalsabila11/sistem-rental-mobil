@@ -1,11 +1,14 @@
 <?php
-// File: controllers/AdminController.php
+// =========================================================================
+// FILE: controllers/AdminController.php (Controller Staff Admin Lengkap)
+// =========================================================================
 
 class AdminController {
-    private $mobilModel;
-    private $fasilitasModel;
+    private $mobilModel; // Instansiasi model mobil
+    private $fasilitasModel; // Instansiasi model fasilitas
 
     public function __construct() {
+        // Proteksi: Pastikan hanya Staff Admin yang bisa akses
         if (session_status() === PHP_SESSION_NONE) { session_start(); }
         
         if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Staff Admin') {
@@ -16,18 +19,16 @@ class AdminController {
         $this->fasilitasModel = new FasilitasModel();
     }
 
-    // Memproses form tambah mobil baru oleh karyawan admin
+    // Memproses form tambah mobil
     public function proses_tambah_mobil() {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $gambar_biner = null; // Default biner gambar kosong
+            $gambar_biner = null;
             
-            // PERBAIKAN: Membaca file gambar sebagai data biner beneran agar cocok dengan kolom longblob database Anda
+            // Logika membaca file gambar sebagai data biner (BLOB)
             if (!empty($_FILES['gambar']['tmp_name'])) {
-                // Membaca konten file gambar menjadi data biner untuk disimpan langsung ke database
                 $gambar_biner = file_get_contents($_FILES['gambar']['tmp_name']);
             }
 
-            // Menyusun array parameter binding untuk query insert model
             $data = [
                 'nama_kategori' => $_POST['nama_kategori'],
                 'merk_mobil'    => $_POST['merk_mobil'],
@@ -36,16 +37,12 @@ class AdminController {
                 'harga_dinamis' => $_POST['harga_dinamis'],
                 'warna'         => $_POST['warna'],
                 'cc'            => $_POST['cc'],
-                'gambar'        => $gambar_biner, // Data biner gambar dimasukkan ke placeholder :gambar
-                'status_mobil'  => $_POST['status_mobil'] // Memasukkan nilai status awal armada
+                'gambar'        => $gambar_biner, // Menyimpan file biner ke DB
+                'status_mobil'  => $_POST['status_mobil']
             ];
 
-            // Panggil model untuk menyimpan data biner ke database
             if ($this->mobilModel->tambahMobil($data)) {
-                // Redirect ke tabel data mobil
                 header('Location: index.php?page=Admin&action=data_mobil');
-            } else {
-                die("Gagal menyimpan data mobil biner.");
             }
             exit;
         }
@@ -64,11 +61,48 @@ class AdminController {
 
             if ($this->fasilitasModel->tambahFasilitas($data)) {
                 header('Location: index.php?page=Admin&action=data_fasilitas');
-            } else {
-                die("Gagal menyimpan data fasilitas.");
             }
             exit;
         }
+    }
+
+    // SINKRONISASI LOGIKA UPGRADE LOYALITAS TERINTEGRASI VALIDASI SYARAT POIN
+    public function proses_upgrade_loyalitas() {
+        $db = Database::getConnection();
+        
+        // Menangkap data ID Pelanggan dan ID Level Loyalitas tujuan dari URL
+        $id_pel = $_GET['id_pelanggan'] ?? null;
+        $id_lev = $_GET['id_level'] ?? null;
+        
+        if ($id_pel && $id_lev) {
+            // 1. Ambil poin saat ini yang dimiliki oleh pelanggan
+            $stmtPel = $db->prepare("SELECT poin, nama_lengkap FROM pelanggan WHERE id_pelanggan = ?");
+            $stmtPel->execute([$id_pel]);
+            $pelData = $stmtPel->fetch(PDO::FETCH_ASSOC);
+            $poin_saat_ini = $pelData['poin'] ?? 0;
+            $nama_pelanggan = $pelData['nama_lengkap'] ?? '';
+
+            // 2. Ambil poin syarat minimal dari loyalitas level tujuan
+            $stmtLoy = $db->prepare("SELECT syarat, nama_level FROM loyalitas WHERE id_level = ?");
+            $stmtLoy->execute([$id_lev]);
+            $loyData = $stmtLoy->fetch(PDO::FETCH_ASSOC);
+            $syarat_minimal = $loyData['syarat'] ?? 0;
+            $nama_level_tujuan = $loyData['nama_level'] ?? '';
+
+            // 3. Validasi Syarat: Apakah poin pelanggan mencukupi syarat minimal naik level?
+            if ($poin_saat_ini < $syarat_minimal) {
+                // Set pesan error jika tidak memenuhi syarat denda/poin naik tingkat
+                $_SESSION['error'] = "Gagal upgrade! Poin " . $nama_pelanggan . " tidak memenuhi syarat untuk menjadi member " . $nama_level_tujuan . " (Butuh " . $syarat_minimal . " pts, poin saat ini: " . $poin_saat_ini . " pts).";
+            } else {
+                // Jika mencukupi, eksekusi query update tingkat loyalitas pelanggan
+                $stmt = $db->prepare("UPDATE pelanggan SET id_level = ? WHERE id_pelanggan = ?");
+                $stmt->execute([$id_lev, $id_pel]);
+                $_SESSION['success'] = "Tingkat loyalitas " . $nama_pelanggan . " berhasil ditingkatkan menjadi " . $nama_level_tujuan . "!";
+            }
+        }
+        
+        header('Location: index.php?page=Admin&action=data_pelanggan');
+        exit;
     }
 }
 ?>

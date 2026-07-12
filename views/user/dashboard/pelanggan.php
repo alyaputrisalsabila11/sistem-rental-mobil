@@ -68,15 +68,15 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
     <!-- Header Atas -->
     <header class="bg-white shadow-sm border-b h-16 flex items-center justify-between px-8 flex-shrink-0">
         <h1 class="text-base font-bold text-gray-800 uppercase flex items-center gap-2">
-            <i class="fa-solid fa-gauge-high text-indigo-600"></i>
-            <span>Dashboard Member</span>
+            <i class="fa-solid fa-car text-indigo-600"></i>
+            <span>Menu: <?= str_replace('_', ' ', $action); ?></span>
         </h1>
         <div class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl">Level: <?= $user_level_nama; ?></div>
     </header>
 
     <main class="flex-1 overflow-y-auto p-6">
 
-        <!-- NOTIFIKASI MERAH BESAR DENDA TERBAN -->
+        <!-- ALERT BLOKIR DENDA -->
         <?php if ($is_blocked): ?>
             <div class="bg-red-50 border-l-4 border-red-500 p-5 rounded-2xl mb-6 shadow-sm">
                 <div class="flex items-center gap-3 text-red-700 font-bold text-sm mb-1">
@@ -130,22 +130,19 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
                 </script>
             <?php endif; ?>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <!-- Loyalty Poin Box -->
-                <div class="bg-white p-5 rounded-2xl border shadow-sm flex flex-col justify-between">
-                    <div>
-                        <span class="text-gray-400 text-[10px] font-bold uppercase tracking-wider">Total Poin Saya</span>
-                        <p class="text-3xl font-black text-indigo-600 mt-2"><?= number_format($user_poin); ?> <span class="text-xs font-normal">pts</span></p>
-                    </div>
-                    <span class="text-[10px] text-gray-400">Naikkan poin dengan menyelesaikan rental.</span>
+                <div class="bg-indigo-600 text-white p-6 rounded-2xl shadow-lg">
+                    <p class="text-xs font-bold uppercase tracking-widest text-indigo-200">Sisa Poin Akun Anda</p>
+                    <p class="text-4xl font-black mt-2"><?= number_format($user_poin); ?> <span class="text-sm font-normal">pts</span></p>
                 </div>
                 <!-- Banner Penawaran Voucher -->
-                <div class="bg-indigo-50 border border-indigo-100 p-5 rounded-2xl flex flex-col justify-between col-span-2">
+                <div class="bg-white p-6 rounded-2xl border flex flex-col justify-between">
                     <div>
-                        <h3 class="font-bold text-indigo-900">Voucher Spesial Menantimu!</h3>
-                        <p class="text-xs text-indigo-700 mt-1">Tukarkan poin loyalitas Anda untuk potongan sewa harian hingga 50%.</p>
+                        <h3 class="font-bold text-gray-800">Butuh Kendaraan?</h3>
+                        <p class="text-xs text-gray-400 mt-1">Sewa armada mobil terbaik mulai dari Rp 350.000 / Hari.</p>
                     </div>
-                    <a href="index.php?page=home&action=voucher_saya" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2 rounded-xl text-center w-36 mt-4 block transition">Tukar Poin</a>
+                    <a href="index.php?page=home&action=gallery" class="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold text-center py-2.5 rounded-xl block transition">Buka Gallery</a>
                 </div>
             </div>
 
@@ -172,22 +169,14 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
                 <?php endif; ?>
             </div>
 
-        <!-- ==================== GALLERY MOBIL (LENGKAP SPESIFIKASI + INFO CABANG) ==================== -->
+        <!-- ==================== GALLERY MOBIL ==================== -->
         <?php elseif ($action === 'gallery'): ?>
             <?php if ($is_blocked): ?>
                 <div class="bg-white p-12 text-center rounded-2xl border italic text-gray-400">Gallery terkunci karena denda tertunggak.</div>
             <?php else: ?>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <?php
-                    // Join ke tabel karyawan & lokasi untuk mengambil info cabang fisik di card gallery pelanggan
-                    $stmtM = $db->query("
-                        SELECT m.*, l.nama_lokasi, l.kota 
-                        FROM mobil m 
-                        LEFT JOIN karyawan k ON m.id_mobil = k.id_karyawan
-                        LEFT JOIN lokasi l ON k.id_lokasi = l.id_lokasi
-                        WHERE m.status_mobil = 'Tersedia' 
-                        ORDER BY m.id_mobil DESC
-                    ");
+                    $stmtM = $db->query("SELECT * FROM mobil WHERE status_mobil = 'Tersedia' ORDER BY id_mobil DESC");
                     $mobils = $stmtM->fetchAll(PDO::FETCH_ASSOC);
                     if(!empty($mobils)): foreach($mobils as $m): ?>
                         <div class="bg-white rounded-3xl border shadow-sm overflow-hidden group hover:shadow-md transition">
@@ -207,15 +196,8 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
                                     <span class="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase"><?= $m['nama_kategori']; ?></span>
                                 </div>
                                 <p class="text-lg font-black text-indigo-600">Rp <?= number_format($m['harga_dinamis']); ?> <span class="text-xs text-gray-400 font-normal">/hari</span></p>
-                                
-                                <!-- INFO LOKASI/CABANG TAMBAHAN DI CARD GALLERY -->
-                                <div class="text-xs text-gray-500 font-semibold flex items-center gap-1">
-                                    <i class="fa-solid fa-location-dot text-indigo-500"></i>
-                                    <span>Cabang: <?= htmlspecialchars($m['nama_lokasi'] ?? 'Pusat Utama'); ?> (<?= htmlspecialchars($m['kota'] ?? 'Jakarta'); ?>)</span>
-                                </div>
-
                                 <div class="grid grid-cols-2 gap-1 text-[10px] text-gray-400 border-t pt-2 mt-2">
-                                    <span>CC: <strong><?= number_format($m['cc'] ?: 1500); ?> cc</strong></span>
+                                    <span>CC: <strong><?= number_format($m['cc']); ?> cc</strong></span>
                                     <span>Tahun: <strong><?= $m['tahun']; ?></strong></span>
                                 </div>
                                 <?php if($activeRental): ?>
@@ -231,7 +213,7 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
                 </div>
             <?php endif; ?>
 
-        <!-- ==================== FORM SEWA KOMPLET (KALKULATOR REAL-TIME) ==================== -->
+        <!-- ==================== FORM SEWA KOMPLET ==================== -->
         <?php elseif ($action === 'form_sewa'): 
             $id_mobil = $_GET['id'] ?? 0;
             $stmtMob = $db->prepare("SELECT * FROM mobil WHERE id_mobil = ?");
@@ -285,7 +267,6 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
                             </select>
                         </div>
 
-                        <!-- Opsi Proteksi Asuransi Bodi -->
                         <div class="p-3 bg-orange-50 border border-orange-200 rounded-2xl flex justify-between items-center text-xs">
                             <div class="flex items-center gap-2">
                                 <i class="fa-solid fa-shield-halved text-orange-500 text-lg"></i>
@@ -303,7 +284,7 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
                     </form>
                 </div>
 
-                <!-- Kolom Kanan: Ringkasan Kalkulasi Real-time -->
+                <!-- Kolom Kanan: Ringkasan Kalkulasi -->
                 <div class="bg-slate-900 text-white p-5 rounded-3xl h-fit space-y-4">
                     <h4 class="font-bold text-xs uppercase tracking-widest text-slate-400 border-b border-slate-800 pb-2">Kalkulasi Ringkasan Biaya</h4>
                     <div class="space-y-2 text-xs">
@@ -331,7 +312,7 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
                 </div>
             </div>
 
-            <!-- JAVASCRIPT KALKULATOR REAL-TIME -->
+            <!-- JAVASCRIPT KALKULATOR -->
             <script>
                 const tglM = document.getElementById('tgl_mulai');
                 const tglS = document.getElementById('tgl_selesai');
@@ -348,19 +329,18 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
 
                     if (tglM.value && tglS.value && end >= start) {
                         let diff = Math.abs(end - start);
-                        durasi = Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1; // Ditambah 1 hari agar masuk akal
+                        durasi = Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1;
                     }
 
                     let totalSewa = durasi * hargaHarian;
                     let hargaFasilitas = parseInt(selF.options[selF.selectedIndex].getAttribute('data-harga') || 0);
                     let diskonPersen = parseFloat(selV.options[selV.selectedIndex].getAttribute('data-diskon') || 0);
-                    let biayaAsuransi = chkAsuransi.checked ? 50000 : 0; // Flat Rp 50.000 jika asuransi dicentang
+                    let biayaAsuransi = chkAsuransi.checked ? 50000 : 0;
 
                     let subTotal = totalSewa + hargaFasilitas + biayaAsuransi;
                     let potonganDiskon = subTotal * (diskonPersen / 100);
                     let grandTotal = subTotal - potonganDiskon;
 
-                    // Update Tampilan Ringkasan Biaya di Samping Kanan
                     document.getElementById('disp_durasi').innerText = durasi;
                     document.getElementById('disp_sewa').innerText = "Rp " + totalSewa.toLocaleString('id-ID');
                     document.getElementById('disp_fasilitas').innerText = "Rp " + hargaFasilitas.toLocaleString('id-ID');
@@ -374,7 +354,7 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
                 });
             </script>
 
-        <!-- ==================== TAB SEWA SAYA ==================== -->
+        <!-- ==================== TAB SEWA SAYA (PERBAIKAN STATUS DI SEWA) ==================== -->
         <?php elseif ($action === 'sewa_saya'): ?>
             <div class="bg-white p-6 rounded-2xl border">
                 <h3 class="font-bold text-gray-800 mb-4">Sewa Saya (Aktif / Pending)</h3>
@@ -392,11 +372,25 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
                             </div>
                             <div class="text-right">
                                 <span class="font-bold text-indigo-600 block">Rp <?= number_format($r['total_harga']); ?></span>
-                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider inline-block mt-1 <?= $r['status_penyewaan'] === 'Confirmed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'; ?>"><?= $r['status_penyewaan']; ?></span>
+                                <?php
+                                // PERBAIKAN: Jika status transaksi 'Confirmed', render lencana tulisan lokal "Di Sewa"
+                                $status = $r['status_penyewaan'];
+                                if ($status === 'Confirmed') {
+                                    $displayStatus = "Di Sewa";
+                                    $badgeColor = "bg-green-100 text-green-700 border-green-200";
+                                } elseif ($status === 'Pending') {
+                                    $displayStatus = "Pending";
+                                    $badgeColor = "bg-yellow-100 text-yellow-700 border-yellow-200";
+                                } else {
+                                    $displayStatus = "Canceled";
+                                    $badgeColor = "bg-red-100 text-red-700 border-red-200";
+                                }
+                                ?>
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider inline-block mt-1 border <?= $badgeColor; ?>"><?= $displayStatus; ?></span>
                             </div>
                         </div>
                     <?php endforeach; else: ?>
-                        <div class="py-12 text-center text-gray-400 italic">Belum ada pengajuan atau transaksi sewa mobil terdaftar.</div>
+                        <div class="py-12 text-center text-gray-400 italic">Belum ada pengajuan sewa mobil terdaftar.</div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -435,7 +429,7 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
                 </div>
             </div>
 
-        <!-- ==================== TAB DENDA SAYA (PENYELESAIAN DATA TABEL DENDA) ==================== -->
+        <!-- ==================== TAB DENDA SAYA ==================== -->
         <?php elseif ($action === 'denda_saya'): ?>
             <div class="bg-white p-6 rounded-2xl border shadow-sm">
                 <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
@@ -537,7 +531,6 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
                     </div>
                 </div>
 
-                <!-- Formulir Profil Mandiri -->
                 <div class="lg:col-span-2 bg-white p-6 rounded-3xl border shadow-sm">
                     <h3 class="font-bold text-gray-800 text-sm mb-4 border-b pb-2 flex items-center gap-2">
                         <i class="fa-solid fa-user-pen text-indigo-600"></i>

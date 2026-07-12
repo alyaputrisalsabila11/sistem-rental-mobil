@@ -1,12 +1,17 @@
 <?php
-    // Menentukan halaman aktif berdasarkan parameter 'action' di URL
-    $action = isset($_GET['action']) ? $_GET['action'] : 'home';
+// =========================================================================
+// FILE: views/user/sidebar/stafflapangan.php (Sidebar Lapangan Lengkap)
+// =========================================================================
+
+// Menentukan menu aktif berdasarkan parameter action dari URL
+$action = isset($_GET['action']) ? $_GET['action'] : 'home';
 ?>
 <aside class="w-64 bg-slate-900 text-white flex flex-col flex-shrink-0 shadow-xl h-screen sticky top-0">
     <div class="p-5 flex items-center space-x-3 border-b border-slate-800">
-        <span class="text-xl font-black tracking-wider uppercase">SIREMO</span>
+        <span class="text-xl font-black tracking-wider uppercase text-indigo-500">SIREMO</span>
     </div>
 
+    <!-- Informasi Profil Petugas -->
     <div class="p-5 border-b border-slate-800 bg-slate-950/40 flex items-center space-x-3">
         <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center font-bold text-white shadow shadow-indigo-500/50 flex-shrink-0">
             SL
@@ -17,6 +22,7 @@
         </div>
     </div>
 
+    <!-- Link Menu Navigasi -->
     <nav class="flex-1 p-4 space-y-4 overflow-y-auto">
         <!-- DASHBOARD -->
         <a href="index.php?page=home_lapangan&action=home" 
@@ -24,23 +30,29 @@
             <span>Dashboard</span>
         </a>
 
-        <!-- MASTER -->
+        <!-- MENU TRANSAKSI OPERASIONAL LAPANGAN -->
         <div>
-            <p class="px-4 text-[10px] font-bold uppercase text-slate-500 mb-2 tracking-widest">Transaksi</p>
+            <p class="px-4 text-[10px] font-bold uppercase text-slate-500 mb-2 tracking-widest">Transaksi Unit</p>
             <div class="space-y-1">
-                <a href="index.php?page=home_lapangan&action=cek_kondisi" class="flex items-center py-2 px-4 rounded-lg text-xs font-bold transition <?= $action === 'cek_kondisi' ? 'bg-white/10 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white' ?>">Cek Kondisi Mobil</a>
+                <!-- Menu Serah Mobil (Handover) -->
+                <a href="index.php?page=home_lapangan&action=serah_mobil" class="flex items-center py-2 px-4 rounded-lg text-xs font-bold transition <?= $action === 'serah_mobil' ? 'bg-white/10 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white' ?>">Serah Mobil (Handover)</a>
+                <!-- Menu Data Di Sewa (Return) -->
+                <a href="index.php?page=home_lapangan&action=di_sewa" class="flex items-center py-2 px-4 rounded-lg text-xs font-bold transition <?= $action === 'di_sewa' ? 'bg-white/10 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white' ?>">Data Di Sewa</a>
+                <!-- Menu Cek Mobil (Visual Damage Check) -->
+                <a href="index.php?page=home_lapangan&action=cek_mobil" class="flex items-center py-2 px-4 rounded-lg text-xs font-bold transition <?= $action === 'cek_mobil' ? 'bg-white/10 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white' ?>">Cek Mobil</a>
             </div>
         </div>
 
-        <!-- DATA -->
+        <!-- REFERENSI DATA MASTER -->
         <div>
-            <p class="px-4 text-[10px] font-bold uppercase text-slate-500 mb-2 tracking-widest">Data</p>
+            <p class="px-4 text-[10px] font-bold uppercase text-slate-500 mb-2 tracking-widest">Referensi</p>
             <div class="space-y-1 text-xs">
                 <a href="index.php?page=home_lapangan&action=data_kerusakan" class="flex items-center py-2 px-4 rounded-lg font-bold transition <?= $action === 'data_kerusakan' ? 'bg-white/10 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white' ?>">Data Jenis Kerusakan</a>
             </div>
         </div>
     </nav>
 
+    <!-- Tombol Keluar Sistem -->
     <div class="p-4 border-t border-slate-800 flex-shrink-0">
         <a href="index.php?page=logout" class="flex items-center justify-center space-x-2 w-full py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-bold transition shadow-md">
             <span>Keluar Sistem</span>
