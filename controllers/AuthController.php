@@ -29,7 +29,13 @@ class AuthController {
             $user = $this->pelangganModel->getUserByEmail($username);
         }
 
-        if ($user && password_verify($password, $user['password'])) {
+        if (
+    $user &&
+    (
+        password_verify($password, $user['password']) ||
+        md5($password) === $user['password']
+    )
+) {
             // Jika ketemu di tabel pelanggan, otomatis dia adalah Pelanggan
             unset($_SESSION['error']);
             

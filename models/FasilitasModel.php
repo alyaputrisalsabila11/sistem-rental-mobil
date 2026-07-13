@@ -20,4 +20,31 @@ class FasilitasModel {
         $stmt = $this->db->prepare($sql);
         return $stmt->execute($data);
     }
+
+    // Update fasilitas
+    public function updateFasilitas($id, $data) {
+        $sql = "UPDATE fasilitas SET
+                    nama_fasilitas = :nama_fasilitas,
+                    deskripsi = :deskripsi,
+                    harga = :harga,
+                    stok = :stok,
+                    status = :status
+                WHERE id_fasilitas = :id_fasilitas";
+
+        $data['id_fasilitas'] = $id;
+
+        $stmt = $this->db->prepare($sql);
+
+        return $stmt->execute($data);
+    }
+
+    // Hapus fasilitas
+    public function hapusFasilitas($id) {
+        $stmt = $this->db->prepare(
+            "DELETE FROM fasilitas
+            WHERE id_fasilitas = ?"
+        );
+
+        return $stmt->execute([$id]);
+    }
 }
