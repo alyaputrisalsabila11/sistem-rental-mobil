@@ -25,6 +25,25 @@ class ManagerController {
 
         $action = $_GET['action'] ?? 'home';
 
+        //edit
+        $lokasiEdit = null; // Sediakan variabel default agar tidak error undefined
+        if ($action === 'edit_lokasi') {
+            $id = $_GET['id'] ?? null;
+            if ($id) {
+                // Gunakan objek $lokasiModel yang sudah di-instansiasi di atas
+                $lokasiEdit = $lokasiModel->getLokasiById($id);
+            }
+        }
+
+        $karyawanEdit = null; // Sediakan variabel default agar tidak error undefined
+        if ($action === 'edit_karyawan') {
+            $id = $_GET['id'] ?? null;
+            if ($id) {
+                // Gunakan objek $karyawanModel yang sudah di-instansiasi di atas
+                $karyawanEdit = $karyawanModel->getKaryawanById($id);
+            }
+        }
+
         // ========== DATA DASHBOARD (hanya dijalankan jika action = home) ==========
         if ($action === 'home') {
             // 1. Total Pendapatan (Status 'complete' ada di tabel penyerahan)

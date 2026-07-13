@@ -12,8 +12,8 @@
                 SA
             </div>
             <div class="overflow-hidden">
-                <p class="text-sm font-bold truncate"><?= htmlspecialchars($admin_name); ?></p>
-                <p class="text-[11px] text-indigo-300 font-medium truncate"><?= htmlspecialchars($admin_email); ?></p>
+                <p class="text-sm font-bold truncate"><?= htmlspecialchars($_SESSION['user_name'] ?? 'staffadmin'); ?></p>
+                <p class="text-[11px] text-indigo-300 font-medium truncate"><?= htmlspecialchars($_SESSION['user_email'] ?? '@staffadmin.swm'); ?></p>
             </div>
         </div>
 

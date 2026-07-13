@@ -25,10 +25,11 @@ class VoucherController {
             $nama_voucher   = isset($_POST['nama_voucher']) ? trim($_POST['nama_voucher']) : '';
             $diskon_persen  = isset($_POST['diskon_persen']) ? trim($_POST['diskon_persen']) : '';
             $kuota          = isset($_POST['kuota']) ? trim($_POST['kuota']) : '';
-            // PENYESUAIAN: Dipecah menjadi tgl_mulai dan tgl_selesai
             $tgl_mulai      = isset($_POST['tgl_mulai']) ? trim($_POST['tgl_mulai']) : '';
             $tgl_selesai    = isset($_POST['tgl_selesai']) ? trim($_POST['tgl_selesai']) : '';
-            $status         = isset($_POST['status']) ? trim($_POST['status']) : 'Aktif';
+            
+            // PERBAIKAN: Default diubah ke 'Nonaktif' (sesuai ENUM database)
+            $status         = isset($_POST['status']) ? trim($_POST['status']) : 'Nonaktif';
 
             // Validasi data wajib
             if (empty($kode_voucher) || empty($nama_voucher) || empty($diskon_persen) || empty($kuota) || empty($tgl_mulai) || empty($tgl_selesai)) {
@@ -68,10 +69,11 @@ class VoucherController {
                 'nama_voucher'   => isset($_POST['nama_voucher']) ? trim($_POST['nama_voucher']) : '',
                 'diskon_persen'  => isset($_POST['diskon_persen']) ? trim($_POST['diskon_persen']) : '',
                 'kuota'          => isset($_POST['kuota']) ? trim($_POST['kuota']) : '',
-                // PENYESUAIAN: Dipecah menjadi tgl_mulai dan tgl_selesai
                 'tgl_mulai'      => isset($_POST['tgl_mulai']) ? trim($_POST['tgl_mulai']) : '',
                 'tgl_selesai'    => isset($_POST['tgl_selesai']) ? trim($_POST['tgl_selesai']) : '',
-                'status'         => isset($_POST['status']) ? trim($_POST['status']) : 'Aktif'
+                
+                // PERBAIKAN: Default diubah ke 'Nonaktif' (sesuai ENUM database)
+                'status'         => isset($_POST['status']) ? trim($_POST['status']) : 'Nonaktif'
             ];
 
             // Validasi data wajib

@@ -56,7 +56,7 @@ switch ($page) {
     case 'lokasi_proses_tambah':
         (new LokasiController())->store();
         break;
-    case 'lokasi_proses_edit':
+    case 'proses_edit_lokasi':
         (new LokasiController())->update();
         break;
     case 'lokasi_hapus':

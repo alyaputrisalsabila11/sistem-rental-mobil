@@ -95,10 +95,11 @@ $action = $_GET['action'] ?? 'home';
                                     <th class="px-4 py-3">Nama Cabang</th>
                                     <th class="px-4 py-3">Kota</th>
                                     <th class="px-4 py-3">Alamat Lengkap</th>
+                                    <th class="px-4 py-3">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 bg-white">
-                                <?php 
+                                <?php
                                 $stmtCab = $db->query("SELECT * FROM lokasi ORDER BY id_lokasi DESC");
                                 $cabs = $stmtCab->fetchAll(PDO::FETCH_ASSOC);
                                 if (!empty($cabs)): foreach ($cabs as $lokasi): ?>
@@ -106,14 +107,51 @@ $action = $_GET['action'] ?? 'home';
                                         <td class="px-4 py-4 font-bold text-gray-900"><?= htmlspecialchars($lokasi['nama_lokasi']); ?></td>
                                         <td class="px-4 py-4 text-gray-600"><?= htmlspecialchars($lokasi['kota']); ?></td>
                                         <td class="px-4 py-4 text-xs max-w-xs truncate"><?= htmlspecialchars($lokasi['alamat']); ?></td>
+                                        <td class="px-4 py-4">
+                                            <a href="index.php?page=manager_dashboard&action=edit_lokasi&id=<?= htmlspecialchars($lokasi['id_lokasi']); ?>" 
+                                            class="text-blue-500 hover:text-blue-700">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="index.php?page=lokasi_hapus&id=<?= htmlspecialchars($lokasi['id_lokasi']); ?>"
+                                            class="text-red-500 hover:text-red-700"
+                                            onclick="return confirm('Apakah Anda yakin ingin menghapus cabang ini?');">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </td>
                                     </tr>
                                 <?php endforeach; else: ?>
-                                    <tr><td colspan="3" class="px-4 py-8 text-center text-gray-400 italic text-xs">Belum ada cabang terdaftar.</td></tr>
+                                    <tr><td colspan="4" class="px-4 py-8 text-center text-gray-400 italic text-xs">Belum ada cabang terdaftar.</td></tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
                 </div>
+
+            <?php elseif ($action === 'edit_lokasi' && isset($lokasiEdit) && $lokasiEdit): ?>
+                <div class="w-full bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                    <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm h-fit">
+                        <h2 class="text-lg font-bold text-gray-800 border-b pb-3 mb-4 flex items-center space-x-2">
+                            <span>✏️</span> <span>Edit Data Cabang</span>
+                        </h2>
+                        <form action="index.php?page=proses_edit_lokasi" method="POST" class="space-y-4">
+                            <input type="hidden" name="id_lokasi" value="<?= htmlspecialchars($lokasiEdit['id_lokasi']); ?>">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Nama Cabang</label>
+                                <input type="text" name="nama_lokasi" value="<?= htmlspecialchars($lokasiEdit['nama_lokasi']); ?>" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Kota</label>
+                                <input type="text" name="kota" value="<?= htmlspecialchars($lokasiEdit['kota']); ?>" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Alamat Lengkap</label>
+                                <textarea name="alamat" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500" rows="3"><?= htmlspecialchars($lokasiEdit['alamat']); ?></textarea>
+                            </div>
+                            <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-sm transition">
+                                Simpan Perubahan
+                            </button>
+                        </form>
+                    </div>
 
             <!-- ==================== KELOLA KARYAWAN (MANAGER) ==================== -->
             <?php elseif ($action === 'buat_akun'): ?>
@@ -190,24 +228,112 @@ $action = $_GET['action'] ?? 'home';
                                 <tr>
                                     <th class="px-4 py-3">Nama Karyawan</th>
                                     <th class="px-4 py-3">Email</th>
+                                    <th class="px-4 py-3">Cabang</th>
                                     <th class="px-4 py-3">Jabatan</th>
+                                    <th class="px-4 py-3">Status</th>
+                                    <th class="px-4 py-3">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 bg-white">
-                                <?php 
+                                <?php
                                 $stmtKar = $db->query("SELECT * FROM karyawan ORDER BY id_karyawan DESC");
                                 $kars = $stmtKar->fetchAll(PDO::FETCH_ASSOC);
                                 if (!empty($kars)): foreach ($kars as $karyawan): ?>
                                     <tr class="hover:bg-gray-50/80 transition-colors">
                                         <td class="px-4 py-4 font-bold text-gray-900"><?= htmlspecialchars($karyawan['nama_karyawan'] ?? 'Tanpa Nama'); ?></td>
                                         <td class="px-4 py-4 text-xs text-gray-600"><?= htmlspecialchars($karyawan['email']); ?></td>
+                                        <td class="px-4 py-4 text-gray-600">
+                                            <?php
+                                            $stmtLok = $db->prepare("SELECT nama_lokasi FROM lokasi WHERE id_lokasi = :id_lokasi");
+                                            $stmtLok->execute(['id_lokasi' => $karyawan['id_lokasi']]);
+                                            $lokasi = $stmtLok->fetch(PDO::FETCH_ASSOC);
+                                            echo htmlspecialchars($lokasi['nama_lokasi'] ?? 'Belum Ditentukan');
+                                            ?>
+                                        </td>
                                         <td class="px-4 py-4 text-gray-600"><?= htmlspecialchars($karyawan['role']); ?></td>
+                                        <td class="px-4 py-4">
+                                            <?php
+                                            $status = $karyawan['status_karyawan'];
+                                            if ($status === 'Aktif') {
+                                                $colorClass = 'bg-green-50 text-green-700 border-green-200';
+                                            } elseif ($status === 'Cuti') {
+                                                $colorClass = 'bg-amber-50 text-amber-700 border-amber-200';
+                                            } else {
+                                                $colorClass = 'bg-red-50 text-red-700 border-red-200';
+                                            }
+                                            ?>
+                                            <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full border <?= $colorClass; ?>">
+                                                <?= htmlspecialchars($status); ?>
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-4">
+                                            <div class="flex space-x-2">
+                                                <a href="index.php?page=manager_dashboard&action=edit_karyawan&id=<?= $karyawan['id_karyawan']; ?>" class="text-blue-500 hover:text-blue-700">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="index.php?page=hapus_karyawan&id=<?= $karyawan['id_karyawan']; ?>" class="text-red-500 hover:text-red-700" onclick="return confirm('Apakah Anda yakin ingin menghapus karyawan ini?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
                                     </tr>
                                 <?php endforeach; else: ?>
-                                    <tr><td colspan="3" class="px-4 py-8 text-center text-gray-400 italic text-xs">Belum ada karyawan terdaftar.</td></tr>
+                                    <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400 italic text-xs">Belum ada karyawan terdaftar.</td></tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+
+            <?php elseif ($action === 'edit_karyawan' && isset($karyawanEdit) && $karyawanEdit): ?>
+                <div class="w-full bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                    <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm h-fit">
+                        <h2 class="text-lg font-bold text-gray-800 border-b pb-3 mb-4 flex items-center space-x-2">
+                            <span>✏️</span> <span>Edit Data Karyawan</span>
+                        </h2>
+                        <form action="index.php?page=karyawan_proses_edit" method="POST" class="space-y-4">
+                            <input type="hidden" name="id_karyawan" value="<?= htmlspecialchars($karyawanEdit['id_karyawan']); ?>">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Nama Lengkap</label>
+                                <input type="text" name="nama_karyawan" value="<?= htmlspecialchars($karyawanEdit['nama_karyawan']); ?>" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Email</label>
+                                <input type="email" name="email" value="<?= htmlspecialchars($karyawanEdit['email']); ?>" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Cabang</label>
+                                <select name="id_lokasi" required class="w-full border p-2 rounded-lg text-sm bg-white focus:outline-indigo-500">
+                                    <?php 
+                                    $stmtC = $db->query("SELECT * FROM lokasi");
+                                    $daftarLokasi = $stmtC->fetchAll(PDO::FETCH_ASSOC);
+                                    if (!empty($daftarLokasi)): foreach ($daftarLokasi as $lokasi): ?>
+                                        <option value="<?= htmlspecialchars($lokasi['id_lokasi']); ?>" <?= $karyawanEdit['id_lokasi'] == $lokasi['id_lokasi'] ? 'selected' : ''; ?>>
+                                            <?= htmlspecialchars($lokasi['nama_lokasi']); ?>
+                                        </option>
+                                    <?php endforeach; endif; ?>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Jabatan / Role</label>
+                                <select name="role" required class="w-full border p-2 rounded-lg text-sm bg-white focus:outline-indigo-500">
+                                    <option value="Manager" <?= $karyawanEdit['role'] === 'Manager' ? 'selected' : ''; ?>>Manager</option>
+                                    <option value="Staff Admin" <?= $karyawanEdit['role'] === 'Staff Admin' ? 'selected' : ''; ?>>Staff Admin</option>
+                                    <option value="Staff Lapangan" <?= $karyawanEdit['role'] === 'Staff Lapangan' ? 'selected' : ''; ?>>Staff Lapangan</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Status Karyawan</label>
+                                <select name="status_karyawan" required class="w-full border p-2 rounded-lg text-sm bg-white focus:outline-indigo-500">
+                                    <option value="Aktif" <?= ($karyawanEdit['status_karyawan'] === 'Aktif') ? 'selected' : ''; ?>>Aktif</option>
+                                    <option value="Tidak Aktif" <?= ($karyawanEdit['status_karyawan'] === 'Tidak Aktif') ? 'selected' : ''; ?>>Tidak Aktif</option>
+                                    <option value="Cuti" <?= ($karyawanEdit['status_karyawan'] === 'Cuti') ? 'selected' : ''; ?>>Cuti</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-sm transition">
+                                Simpan Perubahan
+                            </button>
+                        </form>
                     </div>
                 </div>
 
@@ -256,6 +382,8 @@ $action = $_GET['action'] ?? 'home';
                                     <th class="px-4 py-3">Syarat</th>
                                     <th class="px-4 py-3">Poin</th>
                                     <th class="px-4 py-3">Keterangan</th>
+                                    <th class="px-4 py-3">Status</th>
+                                    <th class="px-4 py-3">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 bg-white">
@@ -268,9 +396,32 @@ $action = $_GET['action'] ?? 'home';
                                         <td class="px-4 py-4 text-gray-600"><?= htmlspecialchars($level['syarat']); ?> Kali Sewa</td>
                                         <td class="px-4 py-4 text-gray-600"><?= htmlspecialchars($level['poin']); ?> pts</td>
                                         <td class="px-4 py-4 text-gray-600 max-w-xs truncate"><?= htmlspecialchars($level['keterangan'] ?? '-'); ?></td>
+                                        <td class="px-4 py-4">
+                                            <?php
+                                            $status = $level['status'];
+                                            if ($status === 'Aktif') {
+                                                $colorClass = 'bg-green-50 text-green-700 border-green-200';
+                                            } elseif ($status === 'Tidak Aktif') {
+                                                $colorClass = 'bg-red-50 text-red-700 border-red-200';
+                                            }
+                                            ?>
+                                            <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full border <?= $colorClass; ?>">
+                                                <?= htmlspecialchars($status); ?>
+                                            </span>
+                                        </td>
+                                        <td class="px-4 py-4">
+                                            <div class="flex space-x-2">
+                                                <a href="index.php?page=loyalitas_edit&id=<?= $level['id_level']; ?>" class="text-blue-500 hover:text-blue-700">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="index.php?page=loyalitas_hapus&id=<?= $level['id_level']; ?>" class="text-red-500 hover:text-red-700" onclick="return confirm('Apakah Anda yakin ingin menghapus level loyalitas ini?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
                                     </tr>
                                 <?php endforeach; else: ?>
-                                    <tr><td colspan="4" class="px-4 py-8 text-center text-gray-400 italic text-xs">Belum ada data tingkat loyalitas.</td></tr>
+                                    <tr><td colspan="6" class="px-4 py-8 text-center text-gray-400 italic text-xs">Belum ada data tingkat loyalitas.</td></tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>
@@ -312,9 +463,9 @@ $action = $_GET['action'] ?? 'home';
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-600 mb-1">Target Level Loyalitas</label>
-                                <select name="id_level" required class="w-full border p-2 rounded text-sm bg-white focus:outline-indigo-500">
-                                    <option value="">-- Pilih Level --</option>
-                                    <?php 
+                                <select name="id_level" class="w-full border p-2 rounded text-sm bg-white focus:outline-indigo-500">
+                                    <option value="">-- Semua Level (Tanpa Batasan) --</option>
+                                    <?php
                                     $stmtL = $db->query("SELECT * FROM loyalitas");
                                     $loyalLevels = $stmtL->fetchAll(PDO::FETCH_ASSOC);
                                     if (!empty($loyalLevels)): foreach ($loyalLevels as $level): ?>
@@ -322,10 +473,20 @@ $action = $_GET['action'] ?? 'home';
                                     <?php endforeach; endif; ?>
                                 </select>
                             </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-1">Tanggal Berlaku</label>
-                                <input type="date" name="tgl_berlaku" class="border p-2 rounded w-full text-sm focus:outline-indigo-500" required>
+
+                            <!-- ==================== PERBAIKAN: PERUBAHAN INPUT TANGGAL BERLAKU ==================== -->
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-600 mb-1">Tanggal Mulai</label>
+                                    <input type="date" name="tgl_mulai" class="border p-2 rounded w-full text-sm focus:outline-indigo-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-600 mb-1">Tanggal Selesai</label>
+                                    <input type="date" name="tgl_selesai" class="border p-2 rounded w-full text-sm focus:outline-indigo-500" required>
+                                </div>
                             </div>
+                            <!-- =================================================================================== -->
+
                             <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2.5 rounded-xl w-full mt-2 transition-colors text-sm shadow-sm">
                                 Simpan Voucher
                             </button>
@@ -333,34 +494,74 @@ $action = $_GET['action'] ?? 'home';
                     </div>
                 </div>
 
-            <?php elseif ($action === 'data_voucher'): ?>
+<?php elseif ($action === 'data_voucher'): ?>
                 <div class="w-full bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-                    <h2 class="text-lg font-bold text-gray-800 border-b pb-3 mb-4 flex items-center space-x-2">
-                        <span>🎟️</span> <span>Daftar Voucher</span>
-                    </h2>
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b pb-3 mb-4 gap-2">
+                        <h2 class="text-lg font-bold text-gray-800 flex items-center space-x-2">
+                            <span>🎟️</span> <span>Daftar Voucher</span>
+                        </h2>
+                    </div>
+                    
                     <div class="overflow-x-auto rounded-xl border border-gray-100">
-                        <table class="w-full text-sm text-left text-gray-500 whitespace-nowrap min-w-[850px] border-collapse">
+                        <table class="w-full text-sm text-left text-gray-500 whitespace-nowrap min-w-[950px] border-collapse">
                             <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
                                 <tr>
-                                    <th class="px-4 py-3">Nama Voucher</th>
+                                    <th class="px-4 py-3">Kode & Nama Voucher</th>
+                                    <th class="px-4 py-3">Target Level</th>
                                     <th class="px-4 py-3">Diskon</th>
                                     <th class="px-4 py-3">Kuota</th>
-                                    <th class="px-4 py-3">Tanggal Berlaku</th>
+                                    <th class="px-4 py-3">Mulai Berlaku</th>
+                                    <th class="px-4 py-3">Selesai Berlaku</th>
+                                    <th class="px-4 py-3 text-center">Status</th>
+                                    <th class="px-4 py-3 text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 bg-white">
                                 <?php 
-                                $stmtV = $db->query("SELECT * FROM voucher ORDER BY id_voucher DESC");
+                                // Ambil data menggunakan query JOIN agar nama_level terbaca (Sinkron dengan VoucherModel)
+                                $stmtV = $db->query("SELECT v.*, l.nama_level FROM voucher v LEFT JOIN loyalitas l ON v.id_level = l.id_level ORDER BY v.id_voucher DESC");
                                 $vouchers = $stmtV->fetchAll(PDO::FETCH_ASSOC);
+                                
                                 if (!empty($vouchers)): foreach ($vouchers as $v): ?>
                                     <tr class="hover:bg-gray-50/80 transition-colors">
-                                        <td class="px-4 py-4 font-bold text-gray-900"><?= htmlspecialchars($v['nama_voucher']); ?></td>
-                                        <td class="px-4 py-4 text-gray-700 font-semibold"><?= htmlspecialchars($v['diskon_persen']); ?>%</td>
+                                        <!-- Gabungan Kode dan Nama Voucher agar hemat ruang -->
+                                        <td class="px-4 py-4">
+                                            <div class="font-bold text-gray-900"><?= htmlspecialchars($v['nama_voucher']); ?></div>
+                                            <div class="text-xs text-indigo-600 font-mono tracking-wider mt-0.5">[ <?= htmlspecialchars($v['kode_voucher']); ?> ]</div>
+                                        </td>
+                                        <td class="px-4 py-4 text-gray-600 font-medium">
+                                            <?= !empty($v['nama_level']) ? htmlspecialchars($v['nama_level']) : '<span class="text-gray-400 italic text-xs">Semua Level</span>'; ?>
+                                        </td>
+                                        <td class="px-4 py-4 text-emerald-600 font-bold"><?= htmlspecialchars(floatval($v['diskon_persen'])); ?>%</td>
                                         <td class="px-4 py-4 text-gray-600"><?= htmlspecialchars($v['kuota']); ?> Lembar</td>
-                                        <td class="px-4 py-4 text-xs text-gray-600"><?= date('d M Y', strtotime($v['tgl_berlaku'])); ?></td>
+                                        <td class="px-4 py-4 text-xs text-gray-600 font-medium"><?= date('d M Y', strtotime($v['tgl_mulai'])); ?></td>
+                                        <td class="px-4 py-4 text-xs text-gray-600 font-medium"><?= date('d M Y', strtotime($v['tgl_selesai'])); ?></td>
+                                        
+                                        <!-- Status Badge -->
+                                        <td class="px-4 py-4 text-center">
+                                            <?php if ($v['status'] === 'Aktif'): ?>
+                                                <span class="px-2.5 py-1 text-xs font-bold bg-green-50 text-green-700 rounded-full border border-green-200">Aktif</span>
+                                            <?php else: ?>
+                                                <span class="px-2.5 py-1 text-xs font-bold bg-red-50 text-red-600 rounded-full border border-red-100">Nonaktif</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        
+                                        <!-- Tombol Aksi (Edit & Delete) -->
+                                        <td class="px-4 py-4 text-center space-x-1">
+                                            <a href="index.php?page=manager_dashboard&action=edit_voucher&id=<?= $v['id_voucher']; ?>" class="inline-block bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 font-bold text-xs px-2.5 py-1 rounded-lg transition-colors">
+                                                Edit
+                                            </a>
+                                            <a href="index.php?page=voucher_proses_hapus&id=<?= $v['id_voucher']; ?>" onclick="return confirm('Apakah Anda yakin ingin menghapus voucher <?= htmlspecialchars($v['kode_voucher']); ?>?')" class="inline-block bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 font-bold text-xs px-2.5 py-1 rounded-lg transition-colors">
+                                                Hapus
+                                            </a>
+                                        </td>
                                     </tr>
                                 <?php endforeach; else: ?>
-                                    <tr><td colspan="4" class="px-4 py-8 text-center text-gray-400 italic text-xs">Belum ada data voucher terdaftar.</td></tr>
+                                    <tr>
+                                        <td colspan="8" class="px-4 py-12 text-center text-gray-400 italic text-xs bg-gray-50/30">
+                                            Belum ada data voucher terdaftar.
+                                        </td>
+                                    </tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>

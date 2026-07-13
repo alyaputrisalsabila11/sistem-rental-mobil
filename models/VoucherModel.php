@@ -11,7 +11,6 @@ class VoucherModel {
     // Fungsi menambah voucher baru
     public function createVoucher($data) {
         try {
-            // PENYESUAIAN: tgl_berlaku diganti tgl_mulai, tgl_selesai
             $sql = "INSERT INTO voucher (id_level, kode_voucher, nama_voucher, diskon_persen, kuota, tgl_mulai, tgl_selesai, status) 
                     VALUES (:id_level, :kode_voucher, :nama_voucher, :diskon_persen, :kuota, :tgl_mulai, :tgl_selesai, :status)";
             
@@ -24,7 +23,9 @@ class VoucherModel {
                 ':kuota'          => $data['kuota'],
                 ':tgl_mulai'      => $data['tgl_mulai'],
                 ':tgl_selesai'    => $data['tgl_selesai'],
-                ':status'         => !empty($data['status']) ? $data['status'] : 'Aktif'
+                
+                // PERBAIKAN: Jika status kosong, masukkan default 'Nonaktif' sesuai ENUM database
+                ':status'         => !empty($data['status']) ? $data['status'] : 'Nonaktif'
             ]);
         } catch (Exception $e) {
             error_log("Error di createVoucher: " . $e->getMessage());
@@ -64,7 +65,6 @@ class VoucherModel {
     // Memperbarui data voucher
     public function updateVoucher($id, $data) {
         try {
-            // PENYESUAIAN: tgl_berlaku = :tgl_berlaku diganti tgl_mulai = :tgl_mulai, tgl_selesai = :tgl_selesai
             $sql = "UPDATE voucher
                     SET id_level = :id_level, kode_voucher = :kode_voucher, nama_voucher = :nama_voucher, 
                         diskon_persen = :diskon_persen, kuota = :kuota, tgl_mulai = :tgl_mulai, tgl_selesai = :tgl_selesai, status = :status 
@@ -79,7 +79,7 @@ class VoucherModel {
                 ':kuota'         => $data['kuota'],
                 ':tgl_mulai'     => $data['tgl_mulai'],
                 ':tgl_selesai'   => $data['tgl_selesai'],
-                ':status'        => $data['status'],
+                ':status'        => $data['status'], // Nilainya sudah dipastikan aman dari Controller
                 ':id_voucher'    => $id
             ]);
         } catch (Exception $e) {
