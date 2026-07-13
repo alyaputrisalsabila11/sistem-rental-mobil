@@ -25,11 +25,13 @@ class VoucherController {
             $nama_voucher   = isset($_POST['nama_voucher']) ? trim($_POST['nama_voucher']) : '';
             $diskon_persen  = isset($_POST['diskon_persen']) ? trim($_POST['diskon_persen']) : '';
             $kuota          = isset($_POST['kuota']) ? trim($_POST['kuota']) : '';
-            $tgl_berlaku    = isset($_POST['tgl_berlaku']) ? trim($_POST['tgl_berlaku']) : '';
+            // PENYESUAIAN: Dipecah menjadi tgl_mulai dan tgl_selesai
+            $tgl_mulai      = isset($_POST['tgl_mulai']) ? trim($_POST['tgl_mulai']) : '';
+            $tgl_selesai    = isset($_POST['tgl_selesai']) ? trim($_POST['tgl_selesai']) : '';
             $status         = isset($_POST['status']) ? trim($_POST['status']) : 'Aktif';
 
             // Validasi data wajib
-            if (empty($kode_voucher) || empty($nama_voucher) || empty($diskon_persen) || empty($kuota) || empty($tgl_berlaku)) {
+            if (empty($kode_voucher) || empty($nama_voucher) || empty($diskon_persen) || empty($kuota) || empty($tgl_mulai) || empty($tgl_selesai)) {
                 $_SESSION['error'] = 'Semua field wajib diisi kecuali batasan level!';
                 header('Location: index.php?page=manager_dashboard&action=buat_voucher');
                 exit;
@@ -41,7 +43,8 @@ class VoucherController {
                 'nama_voucher'   => $nama_voucher,
                 'diskon_persen'  => $diskon_persen,
                 'kuota'          => $kuota,
-                'tgl_berlaku'    => $tgl_berlaku,
+                'tgl_mulai'      => $tgl_mulai,
+                'tgl_selesai'    => $tgl_selesai,
                 'status'         => $status
             ]);
 
@@ -65,12 +68,14 @@ class VoucherController {
                 'nama_voucher'   => isset($_POST['nama_voucher']) ? trim($_POST['nama_voucher']) : '',
                 'diskon_persen'  => isset($_POST['diskon_persen']) ? trim($_POST['diskon_persen']) : '',
                 'kuota'          => isset($_POST['kuota']) ? trim($_POST['kuota']) : '',
-                'tgl_berlaku'    => isset($_POST['tgl_berlaku']) ? trim($_POST['tgl_berlaku']) : '',
+                // PENYESUAIAN: Dipecah menjadi tgl_mulai dan tgl_selesai
+                'tgl_mulai'      => isset($_POST['tgl_mulai']) ? trim($_POST['tgl_mulai']) : '',
+                'tgl_selesai'    => isset($_POST['tgl_selesai']) ? trim($_POST['tgl_selesai']) : '',
                 'status'         => isset($_POST['status']) ? trim($_POST['status']) : 'Aktif'
             ];
 
             // Validasi data wajib
-            if (empty($data['kode_voucher']) || empty($data['nama_voucher']) || empty($data['diskon_persen']) || empty($data['kuota']) || empty($data['tgl_berlaku'])) {
+            if (empty($data['kode_voucher']) || empty($data['nama_voucher']) || empty($data['diskon_persen']) || empty($data['kuota']) || empty($data['tgl_mulai']) || empty($data['tgl_selesai'])) {
                 $_SESSION['error'] = 'Semua field wajib diisi kecuali batasan level!';
                 header('Location: index.php?page=manager_dashboard&action=edit_voucher&id=' . $id_voucher);
                 exit;
@@ -104,5 +109,4 @@ class VoucherController {
         header('Location: index.php?page=manager_dashboard&action=data_voucher');
         exit;
     }
-
 }

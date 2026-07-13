@@ -209,7 +209,6 @@
 
 <!-- KARYAWAN -->
 <?php elseif ($action === 'buat_akun'): ?>
-                
                 <div class="w-full bg-white border border-gray-100 rounded-2xl p-5 shadow-sm">
                     <h2 class="text-base font-bold text-gray-800 border-b pb-2 mb-4 flex items-center space-x-2">
                         <span>Registrasi Karyawan Baru</span>
@@ -268,7 +267,7 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-0.5">Password Sementara</label>
+                                <label class="block text-xs font-bold text-gray-600 mb-0.5">Password</label>
                                 <input type="password" name="password" required class="w-full border p-2 rounded-lg text-xs focus:outline-indigo-500">
                             </div>
                             <div>
@@ -284,7 +283,7 @@
                         <input type="hidden" name="status_karyawan" value="Aktif">
                         
                         <!-- Tombol Submit Kompak -->
-                        <button type="submit" class="w-full py-2.5 bg-[#6347C7] hover:bg-[#5239a7] text-white text-xs font-bold rounded-xl shadow-sm transition mt-2">
+                        <button type="submit" class="w-full py-2.5 bg-[#6347C7] hover:bg-[#5239a7] text-white text-sm font-bold rounded-xl shadow-sm transition">
                             Simpan Akun Baru
                         </button>
                     </form>
@@ -327,14 +326,9 @@
                                                     </span>
                                                 </td>
                                                 <td class="px-4 py-4 text-center">
-                                                    <?php 
-                                                    $status = $karyawan['status_karyawan'] ?? 'Aktif';
-                                                    $colorClass = ($status === 'Aktif') ? 'text-green-600' : 'text-red-500';
-                                                    ?>
-                                                    <!-- PERBAIKAN: Warna status dinamis sesuai dengan nilai datanya -->
-                                                    <span class="text-xs <?= $colorClass; ?> font-bold inline-flex items-center">
-                                                        <span class="mr-1">●</span> <?= htmlspecialchars($status); ?>
-                                                    </span>
+                                                    <?= ($karyawan['status_karyawan'] === 'Aktif')
+                                                        ? '<span class="px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-bold border border-green-200">● Aktif</span>' 
+                                                        : '<span class="px-2.5 py-1 bg-red-50 text-red-600 rounded-full text-xs font-bold border border-red-200">● Nonaktif</span>'; ?>
                                                 </td>
                                                 <!-- PERBAIKAN: Menggunakan susunan flex agar posisi tombol rapi & presisi di tengah -->
                                                 <td class="px-4 py-4 flex items-center justify-center space-x-2">
@@ -342,9 +336,8 @@
                                                        class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition border border-blue-200 shadow-sm">
                                                         Edit
                                                     </a>
-
-                                                    <a href="index.php?page=karyawan_hapus&id=<?= $karyawan['id_karyawan']; ?>" 
-                                                       onclick="return confirm('Apakah Anda yakin ingin menghapus karyawan ini?');" 
+                                                    <a href="index.php?page=karyawan_hapus&id=<?= $karyawan['id_karyawan']; ?>"
+                                                       onclick="return confirm('Apakah Anda yakin ingin menghapus karyawan ini?');"
                                                        class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-xs font-bold transition border border-red-200 shadow-sm">
                                                         Hapus
                                                     </a>
@@ -402,7 +395,6 @@
                                         <option value="Staff Lapangan" <?= $karyawanEdit['role'] === 'Staff Lapangan' ? 'selected' : ''; ?>>Staff Lapangan</option>
                                     </select>
                                 </div>
-                                
                                 <div>
                                     <label class="block text-xs font-bold text-gray-600 mb-1">Status Karyawan</label>
                                     <select name="status_karyawan" required class="w-full border p-2 rounded-lg text-sm bg-white focus:outline-indigo-500">
@@ -411,7 +403,6 @@
                                     </select>
                                 </div>
                             </div>
-
                             <div>
                                 <label class="block text-xs font-bold text-gray-600 mb-1">Penempatan Cabang</label>
                                 <select name="id_lokasi" required class="w-full border p-2 rounded-lg text-sm bg-white focus:outline-indigo-500">
@@ -425,7 +416,6 @@
                                     <?php endif; ?>
                                 </select>
                             </div>
-                            
                             <div class="flex space-x-3 pt-4 border-t border-gray-100 mt-4">
                                 <button type="submit" class="flex-1 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-bold rounded-xl shadow-sm transition-colors">
                                     Simpan Perubahan
@@ -474,8 +464,7 @@
                                 <option value="Nonaktif">Nonaktif</option>
                             </select>
                         </div>
-                        
-                        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2 rounded w-full mt-2 transition-colors">
+                        <button type="submit" class="w-full py-2.5 bg-[#6347C7] hover:bg-[#5239a7] text-white text-sm font-bold rounded-xl shadow-sm transition">
                             Simpan
                         </button>
                     </form>
@@ -654,17 +643,23 @@
                             ?>
                         </select>
                     </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 mb-1">Tanggal Berlaku</label>
-                        <input type="date" name="tgl_berlaku" class="border p-2 rounded w-full text-sm focus:outline-indigo-500" required>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Tanggal Mulai</label>
+                            <input type="date" name="tgl_mulai" class="border p-2 rounded w-full text-sm focus:outline-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Tanggal Selesai</label>
+                            <input type="date" name="tgl_selesai" class="border p-2 rounded w-full text-sm focus:outline-indigo-500" required>
+                        </div>
                     </div>
                     
-                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold px-4 py-2.5 rounded-xl w-full mt-2 transition-colors text-sm shadow-sm">
+                    <button type="submit" class="w-full py-2.5 bg-[#6347C7] hover:bg-[#5239a7] text-white text-sm font-bold rounded-xl shadow-sm transition">
                         Simpan Voucher
                     </button>
                 </form>
             </div>
+        </div>
             
 <?php elseif ($action === 'data_voucher'): ?>
 <div class="w-full bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
@@ -676,9 +671,11 @@
         <table class="w-full text-sm text-left text-gray-500 whitespace-nowrap min-w-[850px] border-collapse">
             <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b border-gray-200">
                 <tr>
+                    <th class="px-4 py-3">Kode Voucher</th>
                     <th class="px-4 py-3">Nama Voucher</th>
                     <th class="px-4 py-3">Diskon</th>
-                    <th class="px-4 py-3">Poin Diperlukan</th>
+                    <th class="px-4 py-3">Target Level</th>
+                    <th class="px-4 py-3">Kuota</th>
                     <th class="px-4 py-3">Tgl. Mulai</th>
                     <th class="px-4 py-3">Tgl. Selesai</th>
                     <th class="px-4 py-3 text-center">Status</th>
@@ -691,44 +688,55 @@
                 if (!empty($vouchers)):
                     foreach ($vouchers as $v): ?>
                     <tr class="hover:bg-gray-50/80 transition-colors">
-                        <td class="px-4 py-4 font-bold text-gray-900">
+                        <td class="px-4 py-4 font-mono text-xs font-bold text-indigo-600">
+                            <?= htmlspecialchars($v['kode_voucher']); ?>
+                        </td>
+
+                        <td class="px-4 py-4 font-semibold text-gray-900">
                             <?= htmlspecialchars($v['nama_voucher']); ?>
                         </td>
                         
+                        <!-- PENYESUAIAN: diskon_potongan -> diskon_persen -->
                         <td class="px-4 py-4 text-gray-700 font-semibold">
-                            <?= htmlspecialchars($v['diskon_potongan']); ?>%
+                            <?= htmlspecialchars($v['diskon_persen']); ?>%
                         </td>
                         
+                        <!-- PENYESUAIAN: Menampilkan nama_level hasil dari LEFT JOIN di model -->
                         <td class="px-4 py-4 text-gray-600">
-                            <?= number_format($v['harga_poin']); ?> Poin
+                            <?= !empty($v['nama_level']) ? htmlspecialchars($v['nama_level']) : '<span class="text-gray-400 text-xs italic">Semua Level</span>'; ?>
+                        </td>
+
+                        <td class="px-4 py-4 text-gray-600">
+                            <?= number_format($v['kuota']); ?> pcs
                         </td>
                         
+                        <!-- PENYESUAIAN: tgl_berlaku_mulai -> tgl_mulai -->
                         <td class="px-4 py-4 text-xs text-gray-600">
-                            <?= date('d M Y H:i', strtotime($v['tgl_berlaku_mulai'])); ?>
+                            <?= date('d M Y', strtotime($v['tgl_mulai'])); ?>
                         </td>
                         
+                        <!-- PENYESUAIAN: tgl_berlaku_selesai -> tgl_selesai -->
                         <td class="px-4 py-4 text-xs text-gray-600">
-                            <?= date('d M Y H:i', strtotime($v['tgl_berlaku_selesai'])); ?>
+                            <?= date('d M Y', strtotime($v['tgl_selesai'])); ?>
                         </td>
                         
                         <td class="px-4 py-4 text-center">
-                            <!-- PERBAIKAN: Mengubah komponen status menjadi bentuk lencana (badge) yang konsisten -->
-                            <?php if (strtolower($v['status']) === 'aktif'): ?>
+                            <?php if ($v['status'] === 'Aktif'): ?>
                                 <span class="px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-bold border border-green-200 inline-flex items-center">
                                     <span class="mr-1">●</span> Aktif
                                 </span>
                             <?php else: ?>
                                 <span class="px-2.5 py-1 bg-red-50 text-red-600 rounded-full text-xs font-bold border border-red-200 inline-flex items-center">
-                                    <span class="mr-1">●</span> Inaktif
+                                    <span class="mr-1">●</span> Nonaktif
                                 </span>
                             <?php endif; ?>
                         </td>
                         
-                        <!-- PERBAIKAN: Menggunakan susunan flex agar tombol aksi berada presisi di tengah -->
-                        <td class="px-4 py-4 flex items-center justify-center">
+                        <td class="px-4 py-4 text-center">
+                            <!-- Menggunakan a href biasa tanpa flex pembungkus td agar posisi text-center bekerja sempurna -->
                             <a href="index.php?page=voucher_hapus&id=<?= $v['id_voucher'] ?>"
                                onclick="return confirm('Apakah Anda yakin ingin menghapus voucher <?= htmlspecialchars($v['nama_voucher']); ?>?')"
-                               class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-xs font-bold transition border border-red-200 shadow-sm">
+                               class="inline-block px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-xs font-bold transition border border-red-200 shadow-sm">
                                 Hapus
                             </a>
                         </td>
@@ -737,8 +745,8 @@
                     endforeach;
                 else: ?>
                     <tr>
-                        <!-- PERBAIKAN: Meningkatkan padding dan menambahkan style italic pada text kosong -->
-                        <td colspan="7" class="px-4 py-8 text-center text-gray-400 italic text-xs">
+                        <!-- colspan ditambah menjadi 9 menyesuaikan jumlah kolom baru -->
+                        <td colspan="9" class="px-4 py-8 text-center text-gray-400 italic text-xs">
                             Belum ada data voucher yang terdaftar.
                         </td>
                     </tr>
@@ -747,6 +755,8 @@
         </table>
     </div>
 </div>
+
+<?php elseif ($action === 'edit_voucher'): ?>
 <?php endif; ?>
     </body>
 </html>

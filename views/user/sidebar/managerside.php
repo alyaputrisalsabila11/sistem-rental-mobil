@@ -50,17 +50,6 @@
                     <a href="index.php?page=manager_dashboard&action=data_kerusakan" class="flex items-center py-2 px-4 rounded-lg text-xs font-semibold transition <?= $action === 'data_kerusakan' ? 'bg-slate-800/80 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white hover:bg-slate-800' ?>">Data Jenis Kerusakan</a>
                 </div>
             </div>
-
-            <!-- LAPORAN -->
-            <div>
-                <p class="px-4 text-[10px] font-bold uppercase text-slate-500 tracking-wider mb-2">Laporan</p>
-                <div class="space-y-1 text-xs">
-                    <a href="#" class="block py-2 px-4 text-slate-400 hover:text-white">Laporan Pendapatan Utama</a>
-                    <a href="#" class="block py-2 px-4 text-slate-400 hover:text-white">Laporan Pelanggan Teraktif</a>
-                    <a href="#" class="block py-2 px-4 text-slate-400 hover:text-white">Laporan Ketersediaan Mobil</a>
-                    <a href="#" class="block py-2 px-4 text-slate-400 hover:text-white">Laporan Riwayat Kerusakan</a>
-                </div>
-            </div>
         </nav>
 
         <div class="p-4 border-t border-slate-800 flex-shrink-0">
