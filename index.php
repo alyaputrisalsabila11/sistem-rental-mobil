@@ -100,11 +100,21 @@ switch ($page) {
     case 'Admin':
         $controller = new AdminController();
         $action = $_GET['action'] ?? '';
-        
+
         if ($action === 'proses_tambah_mobil') {
             $controller->proses_tambah_mobil();
+        } elseif ($action === 'proses_update_mobil') {
+            $controller->proses_update_mobil();
+        } elseif ($action === 'proses_hapus_mobil') {
+            $controller->proses_hapus_mobil();
         } elseif ($action === 'proses_tambah_fasilitas') {
             $controller->proses_tambah_fasilitas();
+        } elseif ($action === 'proses_update_fasilitas') {
+            $controller->proses_update_fasilitas();
+        } elseif ($action === 'proses_hapus_fasilitas') {
+            $controller->proses_hapus_fasilitas();
+         } elseif ($action === 'proses_selesai_perbaikan') {
+            $controller->proses_selesai_perbaikan();
         } elseif ($action === 'proses_upgrade_loyalitas') {
             // PERBAIKAN: Menjalankan logika upgrade melalui fungsi controller
             $controller->proses_upgrade_loyalitas();
@@ -132,4 +142,3 @@ switch ($page) {
         include 'views/public/landing.php';
         break;
 }
-?>

@@ -1,4 +1,11 @@
 <?php
+    if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Ambil data Staff Admin dari session login
+$admin_name = $_SESSION['user_name'] ?? 'Staff Admin';
+$admin_email = $_SESSION['user_email'] ?? '-';
     // Menentukan halaman aktif berdasarkan parameter 'action' di URL
     $action = isset($_GET['action']) ? $_GET['action'] : 'home';
     ?>
@@ -41,6 +48,7 @@
                     <a href="index.php?page=Admin&action=data_voucher" class="flex items-center py-2 px-4 rounded-lg font-bold transition <?= $action === 'data_voucher' ? 'bg-white/10 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white' ?>">Data Voucher</a>
                     <a href="index.php?page=Admin&action=data_fasilitas" class="flex items-center py-2 px-4 rounded-lg font-bold transition <?= $action === 'data_fasilitas' ? 'bg-white/10 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white' ?>">Data Fasilitas</a>
                     <a href="index.php?page=Admin&action=data_pelanggan" class="flex items-center py-2 px-4 rounded-lg font-bold transition <?= $action === 'data_pelanggan' ? 'bg-white/10 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white' ?>">Data Pelanggan</a>
+                    <a href="index.php?page=Admin&action=data_kerusakan" class="flex items-center py-2 px-4 rounded-lg text-xs font-semibold transition <?= $action === 'data_kerusakan' ? 'bg-white/10 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white' ?>">Data Kerusakan</a>
                 </div>
             </div>
         </nav>
