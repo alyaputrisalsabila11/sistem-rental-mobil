@@ -49,27 +49,28 @@ class AuthController {
         // 2. JIKA TIDAK KETEMU DI PELANGGAN, CARI DI TABEL KARYAWAN
        $karyawan = $this->KaryawanModel->getByUsername($username); 
         
-        if ($karyawan) {
-            // PERBAIKAN: Mendukung password_verify ATAU MD5 (biar gampang insert manual lewat phpMyAdmin)
-            if (password_verify($password, $karyawan['password']) || md5($password) === $karyawan['password']) {
-                unset($_SESSION['error']);
-                $_SESSION['user_id'] = $karyawan['id_karyawan'];
-                $_SESSION['user_name'] = $karyawan['nama_karyawan']; // Pastikan mengambil nama_karyawan
-                
-                // Ambil role OTOMATIS dari kolom 'role' di tabel karyawan
-               $_SESSION['role'] = $karyawan['role']; 
+       // Cari bagian pengecekan login karyawan di AuthController.php Anda, lalu ubah menjadi:
+    if ($karyawan) {
+        if (password_verify($password, $karyawan['password']) || md5($password) === $karyawan['password']) {
+            unset($_SESSION['error']);
+            $_SESSION['user_id'] = $karyawan['id_karyawan'];
+            $_SESSION['user_name'] = $karyawan['nama_karyawan']; 
+            $_SESSION['user_email'] = $karyawan['email'];
+            $_SESSION['role'] = $karyawan['role']; 
+            
+            // PERBAIKAN: Menyimpan ID Lokasi cabang ke dalam session untuk keamanan filter data
+            $_SESSION['id_lokasi'] = $karyawan['id_lokasi']; 
 
-                // PERBAIKAN: Pastikan redirect menuju 'Admin' sesuai dengan case di index.php
-                if ($_SESSION['role'] === 'Manager') {
-                    header('Location: index.php?page=manager_dashboard');
-                } elseif ($_SESSION['role'] === 'Staff Admin') {
-                    header('Location: index.php?page=Admin');
-                } elseif ($_SESSION['role'] === 'Staff Lapangan') {
-                    header('Location: index.php?page=home_lapangan');
-                } 
-                exit;
-            }
+            if ($_SESSION['role'] === 'Manager') {
+                header('Location: index.php?page=manager_dashboard');
+            } elseif ($_SESSION['role'] === 'Staff Admin') {
+                header('Location: index.php?page=Admin');
+            } elseif ($_SESSION['role'] === 'Staff Lapangan') {
+                header('Location: index.php?page=home_lapangan');
+            } 
+            exit;
         }
+    }
 
         // Jika di kedua tabel tidak ditemukan atau password salah
         $_SESSION['error'] = 'Username/Email atau password salah!';

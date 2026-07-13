@@ -1,53 +1,107 @@
 <?php
+// controllers/ManagerController.php
+
 class ManagerController {
+    private $db;
+
     public function __construct() {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-
-        // PERBAIKAN: Ubah 'manager' menjadi 'Manager' (M Kapital) sesuai ENUM database
         if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'Manager') {
-            $_SESSION['error'] = 'Akses ditolak! Halaman ini khusus Manager.';
             header('Location: index.php?page=login');
             exit;
         }
+        $this->db = Database::getConnection();
     }
 
     public function index() {
-        require_once __DIR__ . '/../init.php';
-        
+        // Ambil data untuk sidebar/dropdown jika diperlukan
         $karyawanModel = new KaryawanModel();
         $daftarKaryawan = $karyawanModel->getAllKaryawan();
         
         $lokasiModel = new LokasiModel();
         $daftarLokasi = $lokasiModel->getAllLokasi();
 
-        // Letakkan ini tepat sebelum baris kode "include/require view Manager.php"
-        $karyawanEdit = null;
-        $lokasiEdit = null; // Baris ini wajib ada agar saat tidak edit, variabelnya tetap terdefinisi (isinya kosong)
-        
-        // 1. TAMBAHAN: Definisikan variabel loyalEdit agar tidak error (Undefinded Variable) saat di halaman lain
-        $loyalEdit = null;
+        $action = $_GET['action'] ?? 'home';
 
-        // 2. TENTUKAN VARIABELNYA DULU DI SINI
-        $action = isset($_GET['action']) ? $_GET['action'] : 'home';
+        // ========== DATA DASHBOARD (hanya dijalankan jika action = home) ==========
+        if ($action === 'home') {
+            // 1. Total Pendapatan (Status 'complete' ada di tabel penyerahan)
+            $totalPendapatan = $this->db->query(
+                "SELECT SUM(p.total_harga) FROM penyewaan p 
+                 JOIN penyerahan ps ON p.id_penyewaan = ps.id_penyewaan 
+                 WHERE ps.status_sewa = 'complete'"
+            )->fetchColumn() ?: 0;
 
-        if ($action === 'edit_karyawan' && isset($_GET['id'])) {
-            $karyawanEdit = $karyawanModel->getKaryawanById($_GET['id']);
+            // 2. Total Transaksi (Selain yang dibatalkan)
+            $totalTransaksi = $this->db->query(
+                "SELECT COUNT(*) FROM penyewaan WHERE status_penyewaan != 'Canceled'"
+            )->fetchColumn() ?: 0;
+
+            // 3. Pelanggan Baru (30 hari terakhir)
+            $pelangganBaru = $this->db->query(
+                "SELECT COUNT(*) FROM pelanggan WHERE created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)"
+            )->fetchColumn() ?: 0;
+
+            // 4. Unit Maintenance
+            $unitMaintenance = $this->db->query(
+                "SELECT COUNT(*) FROM mobil WHERE status_mobil = 'Maintenance'"
+            )->fetchColumn() ?: 0;
+
+            // 5. GRAFIK: Transaksi per Cabang (DI PERBAIKI JOIN-NYA)
+            $grafikCabang = $this->db->query(
+                "SELECT l.nama_lokasi, DATE_FORMAT(p.tgl_penyewaan, '%Y-%m') AS bulan, COUNT(p.id_penyewaan) AS jumlah
+                 FROM penyewaan p
+                 JOIN penyerahan ps ON p.id_penyewaan = ps.id_penyewaan
+                 JOIN lokasi l ON ps.id_lokasi = l.id_lokasi
+                 WHERE p.tgl_penyewaan >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+                 GROUP BY l.id_lokasi, bulan
+                 ORDER BY bulan ASC"
+            )->fetchAll(PDO::FETCH_ASSOC);
+
+            // 6. Grafik Minat Kategori
+            $grafikKategori = $this->db->query(
+                "SELECT m.nama_kategori, COUNT(p.id_penyewaan) AS total
+                 FROM penyewaan p JOIN mobil m ON p.id_mobil = m.id_mobil
+                 GROUP BY m.nama_kategori ORDER BY total DESC"
+            )->fetchAll(PDO::FETCH_ASSOC);
+
+            // 7. Top 5 Mobil Primadona
+            $topMobil = $this->db->query(
+                "SELECT m.merk_mobil, m.plat_nomor, COUNT(p.id_penyewaan) AS total_sewa
+                 FROM penyewaan p JOIN mobil m ON p.id_mobil = m.id_mobil
+                 GROUP BY p.id_mobil ORDER BY total_sewa DESC LIMIT 5"
+            )->fetchAll(PDO::FETCH_ASSOC);
+
+            // 8. Top 5 Pelanggan Teraktif
+            $topPelanggan = $this->db->query(
+                "SELECT pl.nama_lengkap, COUNT(p.id_penyewaan) AS total_sewa
+                 FROM penyewaan p JOIN pelanggan pl ON p.id_pelanggan = pl.id_pelanggan
+                 GROUP BY p.id_pelanggan ORDER BY total_sewa DESC LIMIT 5"
+            )->fetchAll(PDO::FETCH_ASSOC);
+
+            // 9. Distribusi Loyalitas
+            $loyalitasDist = $this->db->query(
+                "SELECT l.nama_level, COUNT(pl.id_pelanggan) AS jumlah
+                 FROM pelanggan pl LEFT JOIN loyalitas l ON pl.id_level = l.id_level
+                 GROUP BY l.id_level ORDER BY l.id_level"
+            )->fetchAll(PDO::FETCH_ASSOC);
+
+            // 10. Maintenance Alert Terbaru
+            $kerusakanAlert = $this->db->query(
+                "SELECT pg.biaya_kerusakan, jk.nama_kerusakan, m.plat_nomor, pg.jam_dikembalikan
+                 FROM pengembalian pg
+                 LEFT JOIN jenis_kerusakan jk ON pg.id_kerusakan = jk.id_kerusakan
+                 LEFT JOIN penyerahan pny ON pg.id_penyerahan = pny.id_penyerahan
+                 LEFT JOIN penyewaan ps ON pny.id_penyewaan = ps.id_penyewaan
+                 LEFT JOIN mobil m ON ps.id_mobil = m.id_mobil
+                 WHERE pg.biaya_kerusakan > 0
+                 ORDER BY pg.jam_dikembalikan DESC LIMIT 5"
+            )->fetchAll(PDO::FETCH_ASSOC);
         }
-        
-        if ($action === 'edit_cabang' && isset($_GET['id'])) {
-            $lokasiEdit = $lokasiModel->getLokasiById($_GET['id']);
-        }
 
-        // 3. TAMBAHAN: Logika untuk mengambil data lama level loyalitas yang mau diedit
-        if ($action === 'edit_loyal' && isset($_GET['id'])) {
-            $loyalModel = new LoyalModel();
-            $loyalEdit = $loyalModel->getLoyalById($_GET['id']);
-        }
-
-        // 4. BARU PANGGIL VIEW-NYA DI PALING BAWAH
-        // (Sesuaikan nama file/path view Manager Anda jika berbeda)
+        // Load View
         include __DIR__ . '/../views/user/dashboard/manager.php';
     }
 }

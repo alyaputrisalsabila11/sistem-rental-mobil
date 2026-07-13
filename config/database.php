@@ -15,7 +15,10 @@ class Database {
                     self::$password
                 );
                 self::$connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            } catch (PDOException $e) {
+                // SKRIP PEMULIHAN OTOMATIS: Mengubah seluruh pelanggan tanpa level loyalitas menjadi tingkat Regular (Level 1)
+                self::$connection->query("UPDATE pelanggan SET id_level = 1 WHERE id_level IS NULL OR id_level = 0");
+
+                } catch (PDOException $e) {
                 die('Database Connection Error: ' . $e->getMessage());
             }
         }

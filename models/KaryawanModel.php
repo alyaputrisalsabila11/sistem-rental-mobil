@@ -53,10 +53,11 @@ class KaryawanModel {
         }
     }
 
-    // Fungsi untuk mencari karyawan berdasarkan email saat login
+    // Tambahkan/sesuaikan metode getByUsername di KaryawanModel.php Anda:
     public function getByUsername($username) {
         try {
-            $sql = "SELECT id_karyawan, nama_karyawan, email, password, role 
+            // PERBAIKAN: Memastikan kolom id_lokasi ikut terambil dari query select
+            $sql = "SELECT id_karyawan, nama_karyawan, email, password, role, id_lokasi 
                     FROM karyawan 
                     WHERE email = ? LIMIT 1";
             

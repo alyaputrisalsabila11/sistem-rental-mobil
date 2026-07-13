@@ -1,23 +1,29 @@
 <?php
+// File: models/MobilModel.php
+
 class MobilModel {
-    private $db;
+    private $db; // Variabel koneksi database
 
     public function __construct() {
+        // Mengambil koneksi database singleton yang sudah dibuat
         $this->db = Database::getConnection();
     }
 
     // Mengambil semua data mobil untuk ditampilkan di tabel
     public function getAllMobil() {
+        // Query SQL mengambil seluruh data mobil diurutkan dari yang terbaru
         $stmt = $this->db->query("SELECT * FROM mobil ORDER BY id_mobil DESC");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     // Menyimpan data mobil baru ke database
     public function tambahMobil($data) {
+        // PERBAIKAN: Menggunakan nama kolom 'status_mobil' sesuai dengan PDM di phpMyAdmin Anda
         $sql = "INSERT INTO mobil (nama_kategori, merk_mobil, plat_nomor, tahun, harga_dinamis, warna, cc, gambar, status_mobil) 
                 VALUES (:nama_kategori, :merk_mobil, :plat_nomor, :tahun, :harga_dinamis, :warna, :cc, :gambar, :status_mobil)";
         
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute($data);
+        $stmt = $this->db->prepare($sql); // Menyiapkan statement PDO
+        return $stmt->execute($data); // Menjalankan query dengan data biner gambar & status_mobil
     }
 }
+?>
