@@ -11,8 +11,9 @@ class VoucherModel {
     // Fungsi menambah voucher baru
     public function createVoucher($data) {
         try {
-            $sql = "INSERT INTO voucher (id_level, kode_voucher, nama_voucher, diskon_persen, kuota, tgl_berlaku, status) 
-                    VALUES (:id_level, :kode_voucher, :nama_voucher, :diskon_persen, :kuota, :tgl_berlaku, :status)";
+            // PENYESUAIAN: tgl_berlaku diganti tgl_mulai, tgl_selesai
+            $sql = "INSERT INTO voucher (id_level, kode_voucher, nama_voucher, diskon_persen, kuota, tgl_mulai, tgl_selesai, status) 
+                    VALUES (:id_level, :kode_voucher, :nama_voucher, :diskon_persen, :kuota, :tgl_mulai, :tgl_selesai, :status)";
             
             $stmt = $this->db->prepare($sql);
             return $stmt->execute([
@@ -21,7 +22,8 @@ class VoucherModel {
                 ':nama_voucher'   => $data['nama_voucher'],
                 ':diskon_persen'  => $data['diskon_persen'],
                 ':kuota'          => $data['kuota'],
-                ':tgl_berlaku'    => $data['tgl_berlaku'],
+                ':tgl_mulai'      => $data['tgl_mulai'],
+                ':tgl_selesai'    => $data['tgl_selesai'],
                 ':status'         => !empty($data['status']) ? $data['status'] : 'Aktif'
             ]);
         } catch (Exception $e) {
@@ -30,7 +32,7 @@ class VoucherModel {
         }
     }
 
-    // Mengambil semua data voucher (di-JOIN dengan tabel loyalitas/loyalitas untuk tahu khusus level apa)
+    // Mengambil semua data voucher (di-JOIN dengan tabel loyalitas untuk tahu khusus level apa)
     public function getAllVoucher() {
         try {
             $sql = "SELECT v.*, l.nama_level 
@@ -62,9 +64,10 @@ class VoucherModel {
     // Memperbarui data voucher
     public function updateVoucher($id, $data) {
         try {
+            // PENYESUAIAN: tgl_berlaku = :tgl_berlaku diganti tgl_mulai = :tgl_mulai, tgl_selesai = :tgl_selesai
             $sql = "UPDATE voucher
                     SET id_level = :id_level, kode_voucher = :kode_voucher, nama_voucher = :nama_voucher, 
-                        diskon_persen = :diskon_persen, kuota = :kuota, tgl_berlaku = :tgl_berlaku, status = :status 
+                        diskon_persen = :diskon_persen, kuota = :kuota, tgl_mulai = :tgl_mulai, tgl_selesai = :tgl_selesai, status = :status 
                     WHERE id_voucher = :id_voucher";
             
             $stmt = $this->db->prepare($sql);
@@ -74,7 +77,8 @@ class VoucherModel {
                 ':nama_voucher'  => $data['nama_voucher'],
                 ':diskon_persen' => $data['diskon_persen'],
                 ':kuota'         => $data['kuota'],
-                ':tgl_berlaku'   => $data['tgl_berlaku'],
+                ':tgl_mulai'     => $data['tgl_mulai'],
+                ':tgl_selesai'   => $data['tgl_selesai'],
                 ':status'        => $data['status'],
                 ':id_voucher'    => $id
             ]);

@@ -160,7 +160,7 @@ $action = $_GET['action'] ?? 'home';
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-0.5">Password Sementara</label>
+                                <label class="block text-xs font-bold text-gray-600 mb-0.5">Password</label>
                                 <input type="password" name="password" required class="w-full border p-2 rounded-lg text-xs focus:outline-indigo-500">
                             </div>
                             <div>
