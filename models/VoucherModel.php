@@ -11,8 +11,8 @@ class VoucherModel {
     // Fungsi menambah voucher baru
     public function createVoucher($data) {
         try {
-            $sql = "INSERT INTO voucher (id_level, kode_voucher, nama_voucher, diskon_persen, kuota, tgl_mulai, tgl_selesai, status) 
-                    VALUES (:id_level, :kode_voucher, :nama_voucher, :diskon_persen, :kuota, :tgl_mulai, :tgl_selesai, :status)";
+            $sql = "INSERT INTO voucher (id_level, kode_voucher, nama_voucher, diskon_persen, kuota, harga_poin, tgl_mulai, tgl_selesai, status) 
+                    VALUES (:id_level, :kode_voucher, :nama_voucher, :diskon_persen, :kuota, :harga_poin, :tgl_mulai, :tgl_selesai, :status)";
             
             $stmt = $this->db->prepare($sql);
             return $stmt->execute([
@@ -21,6 +21,7 @@ class VoucherModel {
                 ':nama_voucher'   => $data['nama_voucher'],
                 ':diskon_persen'  => $data['diskon_persen'],
                 ':kuota'          => $data['kuota'],
+                ':harga_poin'     => $data['harga_poin'],
                 ':tgl_mulai'      => $data['tgl_mulai'],
                 ':tgl_selesai'    => $data['tgl_selesai'],
                 
@@ -67,7 +68,7 @@ class VoucherModel {
         try {
             $sql = "UPDATE voucher
                     SET id_level = :id_level, kode_voucher = :kode_voucher, nama_voucher = :nama_voucher, 
-                        diskon_persen = :diskon_persen, kuota = :kuota, tgl_mulai = :tgl_mulai, tgl_selesai = :tgl_selesai, status = :status 
+                        diskon_persen = :diskon_persen, kuota = :kuota, harga_poin = :harga_poin, tgl_mulai = :tgl_mulai, tgl_selesai = :tgl_selesai, status = :status 
                     WHERE id_voucher = :id_voucher";
             
             $stmt = $this->db->prepare($sql);
@@ -77,6 +78,7 @@ class VoucherModel {
                 ':nama_voucher'  => $data['nama_voucher'],
                 ':diskon_persen' => $data['diskon_persen'],
                 ':kuota'         => $data['kuota'],
+                ':harga_poin'    => $data['harga_poin'],
                 ':tgl_mulai'     => $data['tgl_mulai'],
                 ':tgl_selesai'   => $data['tgl_selesai'],
                 ':status'        => $data['status'], // Nilainya sudah dipastikan aman dari Controller

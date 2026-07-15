@@ -411,7 +411,7 @@ $action = $_GET['action'] ?? 'home';
                                         </td>
                                         <td class="px-4 py-4">
                                             <div class="flex space-x-2">
-                                                <a href="index.php?page=loyalitas_edit&id=<?= $level['id_level']; ?>" class="text-blue-500 hover:text-blue-700">
+                                                <a href="index.php?page=manager_dashboard&action=edit_loyal&id=<?= $level['id_level']; ?>" class="text-blue-500 hover:text-blue-700">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
                                                 <a href="index.php?page=loyalitas_hapus&id=<?= $level['id_level']; ?>" class="text-red-500 hover:text-red-700" onclick="return confirm('Apakah Anda yakin ingin menghapus level loyalitas ini?')">
@@ -425,6 +425,44 @@ $action = $_GET['action'] ?? 'home';
                                 <?php endif; ?>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+
+            <?php elseif ($action === 'edit_loyal' && isset($loyalEdit) && $loyalEdit): ?>
+                <div class="w-full bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                    <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm h-fit">
+                        <h2 class="text-lg font-bold text-gray-800 border-b pb-3 mb-4 flex items-center space-x-2">
+                            <span>✏️</span> <span>Edit Level Loyalitas</span>
+                        </h2>
+                        <form action="index.php?page=loyal_proses_edit" method="POST" class="space-y-4">
+                            <input type="hidden" name="id_level" value="<?= htmlspecialchars($loyalEdit['id_level']); ?>">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Nama Level</label>
+                                <input type="text" name="nama_level" value="<?= htmlspecialchars($loyalEdit['nama_level']); ?>" required class="w-full border p-2.5 rounded-lg text-sm focus:outline-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Syarat Penggunaan (Min Sewa)</label>
+                                <input type="number" name="syarat" value="<?= htmlspecialchars($loyalEdit['syarat']); ?>" required class="w-full border p-2.5 rounded-lg text-sm focus:outline-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Poin Loyalitas</label>
+                                <input type="number" name="poin" step="0.1" value="<?= htmlspecialchars($loyalEdit['poin']); ?>" required class="w-full border p-2.5 rounded-lg text-sm focus:outline-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Keterangan / Benefit</label>
+                                <textarea name="keterangan" class="w-full border p-2.5 rounded-lg text-sm focus:outline-indigo-500" rows="3"><?= htmlspecialchars($loyalEdit['keterangan'] ?? ''); ?></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Status</label>
+                                <select name="status" required class="w-full border p-2.5 rounded-lg text-sm bg-white focus:outline-indigo-500">
+                                    <option value="Aktif" <?= ($loyalEdit['status'] === 'Aktif') ? 'selected' : ''; ?>>Aktif</option>
+                                    <option value="Tidak Aktif" <?= ($loyalEdit['status'] === 'Tidak Aktif') ? 'selected' : ''; ?>>Tidak Aktif</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-sm transition">
+                                Simpan Perubahan
+                            </button>
+                        </form>
                     </div>
                 </div>
 
@@ -447,6 +485,10 @@ $action = $_GET['action'] ?? 'home';
                             <div>
                                 <label class="block text-xs font-bold text-gray-600 mb-1">Diskon (%)</label>
                                 <input type="number" name="diskon_persen" step="0.01" min="1" max="100" placeholder="Contoh: 10.50" class="border p-2 rounded w-full text-sm focus:outline-indigo-500" required>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Harga Poin</label>
+                                <input type="number" name="harga_poin" min="1" placeholder="Contoh: 1000" class="border p-2 rounded w-full text-sm focus:outline-indigo-500" required>
                             </div>
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
@@ -510,6 +552,7 @@ $action = $_GET['action'] ?? 'home';
                                     <th class="px-4 py-3">Target Level</th>
                                     <th class="px-4 py-3">Diskon</th>
                                     <th class="px-4 py-3">Kuota</th>
+                                    <th class="px-4 py-3">Harga Poin</th>
                                     <th class="px-4 py-3">Mulai Berlaku</th>
                                     <th class="px-4 py-3">Selesai Berlaku</th>
                                     <th class="px-4 py-3 text-center">Status</th>
@@ -517,7 +560,7 @@ $action = $_GET['action'] ?? 'home';
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100 bg-white">
-                                <?php 
+                                <?php
                                 // Ambil data menggunakan query JOIN agar nama_level terbaca (Sinkron dengan VoucherModel)
                                 $stmtV = $db->query("SELECT v.*, l.nama_level FROM voucher v LEFT JOIN loyalitas l ON v.id_level = l.id_level ORDER BY v.id_voucher DESC");
                                 $vouchers = $stmtV->fetchAll(PDO::FETCH_ASSOC);
@@ -534,6 +577,7 @@ $action = $_GET['action'] ?? 'home';
                                         </td>
                                         <td class="px-4 py-4 text-emerald-600 font-bold"><?= htmlspecialchars(floatval($v['diskon_persen'])); ?>%</td>
                                         <td class="px-4 py-4 text-gray-600"><?= htmlspecialchars($v['kuota']); ?> Lembar</td>
+                                        <td class="px-4 py-4 text-gray-600"><?= htmlspecialchars($v['harga_poin']); ?> Poin</td>
                                         <td class="px-4 py-4 text-xs text-gray-600 font-medium"><?= date('d M Y', strtotime($v['tgl_mulai'])); ?></td>
                                         <td class="px-4 py-4 text-xs text-gray-600 font-medium"><?= date('d M Y', strtotime($v['tgl_selesai'])); ?></td>
                                         
@@ -545,15 +589,15 @@ $action = $_GET['action'] ?? 'home';
                                                 <span class="px-2.5 py-1 text-xs font-bold bg-red-50 text-red-600 rounded-full border border-red-100">Nonaktif</span>
                                             <?php endif; ?>
                                         </td>
-                                        
-                                        <!-- Tombol Aksi (Edit & Delete) -->
-                                        <td class="px-4 py-4 text-center space-x-1">
-                                            <a href="index.php?page=manager_dashboard&action=edit_voucher&id=<?= $v['id_voucher']; ?>" class="inline-block bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-700 font-bold text-xs px-2.5 py-1 rounded-lg transition-colors">
-                                                Edit
-                                            </a>
-                                            <a href="index.php?page=voucher_proses_hapus&id=<?= $v['id_voucher']; ?>" onclick="return confirm('Apakah Anda yakin ingin menghapus voucher <?= htmlspecialchars($v['kode_voucher']); ?>?')" class="inline-block bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 font-bold text-xs px-2.5 py-1 rounded-lg transition-colors">
-                                                Hapus
-                                            </a>
+                                        <td class="px-4 py-4">
+                                            <div class="flex space-x-2">
+                                                <a href="index.php?page=manager_dashboard&action=edit_voucher&id=<?= $v['id_voucher']; ?>" class="text-blue-500 hover:text-blue-700">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="index.php?page=voucher_proses_hapus&id=<?= $v['id_voucher']; ?>" class="text-red-500 hover:text-red-700" onclick="return confirm('Apakah Anda yakin ingin menghapus voucher <?= htmlspecialchars($v['kode_voucher']); ?>?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; else: ?>
@@ -565,6 +609,80 @@ $action = $_GET['action'] ?? 'home';
                                 <?php endif; ?>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+
+            <?php elseif ($action === 'edit_voucher' && isset($voucherEdit) && $voucherEdit): ?>
+                <div class="w-full bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+                    <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm h-fit">
+                        <h2 class="text-lg font-bold text-gray-800 border-b pb-3 mb-4 flex items-center space-x-2">
+                            <span>✏️</span> <span>Edit Data Voucher</span>
+                        </h2>
+                        <form action="index.php?page=voucher_proses_edit" method="POST" class="space-y-4">
+                            <input type="hidden" name="id_voucher" value="<?= htmlspecialchars($voucherEdit['id_voucher']); ?>">
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Kode Voucher</label>
+                                <input type="text" name="kode_voucher" value="<?= htmlspecialchars($voucherEdit['kode_voucher']); ?>" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500 uppercase">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Nama Voucher</label>
+                                <input type="text" name="nama_voucher" value="<?= htmlspecialchars($voucherEdit['nama_voucher']); ?>" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Target Level Loyalitas</label>
+                                <select name="id_level" class="w-full border p-2 rounded-lg text-sm bg-white focus:outline-indigo-500">
+                                    <option value="">Semua Level</option>
+                                    <?php 
+                                    $stmtL = $db->query("SELECT * FROM loyalitas");
+                                    $daftarLoyalitas = $stmtL->fetchAll(PDO::FETCH_ASSOC);
+                                    if (!empty($daftarLoyalitas)): foreach ($daftarLoyalitas as $loyal): ?>
+                                        <option value="<?= htmlspecialchars($loyal['id_level']); ?>" <?= $voucherEdit['id_level'] == $loyal['id_level'] ? 'selected' : ''; ?>>
+                                            <?= htmlspecialchars($loyal['nama_level']); ?>
+                                        </option>
+                                    <?php endforeach; endif; ?>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Diskon (%)</label>
+                                <input type="number" step="0.01" min="0" max="100" name="diskon_persen" value="<?= htmlspecialchars(floatval($voucherEdit['diskon_persen'])); ?>" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Kuota (Lembar)</label>
+                                <input type="number" min="0" name="kuota" value="<?= htmlspecialchars($voucherEdit['kuota']); ?>" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Harga Poin</label>
+                                <input type="number" min="0" name="harga_poin" value="<?= htmlspecialchars($voucherEdit['harga_poin']); ?>" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Mulai Berlaku</label>
+                                <input type="date" name="tgl_mulai" value="<?= htmlspecialchars($voucherEdit['tgl_mulai']); ?>" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Selesai Berlaku</label>
+                                <input type="date" name="tgl_selesai" value="<?= htmlspecialchars($voucherEdit['tgl_selesai']); ?>" required class="w-full border p-2 rounded-lg text-sm focus:outline-indigo-500">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-1">Status Voucher</label>
+                                <select name="status" required class="w-full border p-2 rounded-lg text-sm bg-white focus:outline-indigo-500">
+                                    <option value="Aktif" <?= $voucherEdit['status'] === 'Aktif' ? 'selected' : ''; ?>>Aktif</option>
+                                    <option value="Nonaktif" <?= $voucherEdit['status'] === 'Nonaktif' ? 'selected' : ''; ?>>Nonaktif</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-sm transition">
+                                Simpan Perubahan
+                            </button>
+                        </form>
                     </div>
                 </div>
 
@@ -633,6 +751,41 @@ $action = $_GET['action'] ?? 'home';
                                 </tr>
                                 <?php endforeach; else: ?>
                                 <tr><td colspan="4" class="p-8 text-center italic">Belum ada armada mobil terdaftar.</td></tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            <?php elseif ($action === 'data_fasilitas'): ?>
+                <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                    <h2 class="text-base font-bold text-gray-800 border-b pb-2 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-wrench text-indigo-600"></i>
+                        <span>Daftar Fasilitas Mobil SIREMO</span>
+                    </h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left text-gray-500 border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 border-b">
+                                    <th class="p-4 font-bold">Nama Fasilitas</th>
+                                    <th class="p-4 font-bold">Harga</th>
+                                    <th class="p-4 font-bold">Stok</th>
+                                    <th class="p-4 font-bold">Deskripsi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $stmtFas = $db->query("SELECT * FROM fasilitas ORDER BY id_fasilitas DESC");
+                                $fases = $stmtFas->fetchAll(PDO::FETCH_ASSOC);
+                                if (!empty($fases)): foreach ($fases as $f): ?>
+                                <tr class="hover:bg-gray-50/50">
+                                    <td class="p-4 font-bold text-gray-800"><?= htmlspecialchars($f['nama_fasilitas']); ?></td>
+                                    <td class="p-4 text-indigo-600 font-bold">Rp <?= number_format($f['harga']); ?></td>
+                                    <td class="p-4"><?= htmlspecialchars($f['stok']); ?> Unit</td>
+                                    <td class="p-4"><?= htmlspecialchars($f['deskripsi'] ?? '-'); ?></td>
+                                </tr>
+                                <?php endforeach; else: ?>
+                                <tr><td colspan="2" class="p-8 text-center italic">Belum ada fasilitas mobil terdaftar.</td></tr>
                                 <?php endif; ?>
                             </tbody>
                         </table>

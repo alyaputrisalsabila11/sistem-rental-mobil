@@ -124,5 +124,82 @@ class PelangganModel {
             return false;
         }
     }
+
+    public function redeemVoucher($id_pelanggan, $id_voucher) {
+        try {
+            // 1. Ambil data voucher & cek keaktifannya
+            $stmtVoucher = $this->db->prepare("SELECT * FROM voucher WHERE id_voucher = ? AND status = 'Aktif' LIMIT 1");
+            $stmtVoucher->execute([$id_voucher]);
+            $voucher = $stmtVoucher->fetch(PDO::FETCH_ASSOC);
+
+            if (!$voucher) {
+                throw new Exception("Voucher tidak ditemukan atau sudah tidak aktif!");
+            }
+
+            // Cek masa berlaku voucher
+            $today = date('Y-m-d');
+            if ($today < $voucher['tgl_mulai'] || $today > $voucher['tgl_selesai']) {
+                throw new Exception("Voucher ini sudah kedaluwarsa atau belum bisa digunakan!");
+            }
+
+            // Cek ketersediaan kuota voucher
+            if ($voucher['kuota'] <= 0) {
+                throw new Exception("Kuota penukaran voucher ini sudah habis!");
+            }
+
+            // 2. Ambil data poin & level pelanggan saat ini
+            $pelanggan = $this->getUserById($id_pelanggan);
+            if (!$pelanggan) {
+                throw new Exception("Data pelanggan tidak ditemukan!");
+            }
+
+            // Cek apakah poin pelanggan mencukupi
+            if ($pelanggan['poin'] < $voucher['harga_poin']) {
+                throw new Exception("Poin Anda tidak cukup! Poin saat ini: " . $pelanggan['poin'] . " Poin, dibutuhkan: " . $voucher['harga_poin'] . " Poin.");
+            }
+
+            // Cek level minimal pelanggan (jika voucher membatasi id_level tertentu)
+            if (isset($voucher['id_level']) && !empty($voucher['id_level'])) {
+                if ($pelanggan['id_level'] < $voucher['id_level']) {
+                    throw new Exception("Level loyalitas Anda belum mencukupi untuk menukar voucher ini!");
+                }
+            }
+
+            // 3. MULAI TRANSAKSI AMAN (DATABASE TRANSACTION)
+            $this->db->beginTransaction();
+
+            // A. Kurangi poin pelanggan di tabel pelanggan
+            $updatePoin = $this->db->prepare("UPDATE pelanggan SET poin = poin - ? WHERE id_pelanggan = ?");
+            $updatePoin->execute([$voucher['harga_poin'], $id_pelanggan]);
+
+            // B. Kurangi kuota voucher di tabel voucher
+            $updateKuota = $this->db->prepare("UPDATE voucher SET kuota = kuota - 1 WHERE id_voucher = ?");
+            $updateKuota->execute([$id_voucher]);
+
+            // C. Masukkan riwayat klaim ke tabel penukaran_voucher
+            $insertPenukaran = $this->db->prepare("
+                INSERT INTO penukaran_voucher (id_pelanggan, id_voucher, status_pakai, tgl_klaim) 
+                VALUES (?, ?, 'belum_dipakai', NOW())
+            ");
+            $insertPenukaran->execute([$id_pelanggan, $id_voucher]);
+
+            // Jika semua operasi di atas sukses, simpan secara permanen ke database
+            $this->db->commit();
+            return [
+                'status' => true,
+                'message' => "Selamat! Voucher '" . htmlspecialchars($voucher['nama_voucher']) . "' berhasil ditukarkan."
+            ];
+
+        } catch (Exception $e) {
+            // Jika ada yang gagal, batalkan semua manipulasi di atas agar poin tidak hilang
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            return [
+                'status' => false,
+                'message' => $e->getMessage()
+            ];
+        }
+    }
 }
 ?>

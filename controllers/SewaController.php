@@ -10,7 +10,7 @@ class SewaController
         $this->db = Database::getConnection();
     }
 
-    public function store()
+public function store()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $id_pelanggan = $_SESSION['user_id'];
@@ -27,85 +27,85 @@ class SewaController
             $durasi = $start->diff($end)->days;
             if ($durasi <= 0) $durasi = 1;
 
-            // 2. Hitung Total Harga (Server Side Validation)
-            // Ambil harga mobil
+            // 2. Hitung Total Harga
             $stmtM = $this->db->prepare("SELECT harga_dinamis FROM mobil WHERE id_mobil = ?");
             $stmtM->execute([$id_mobil]);
             $harga_mobil = $stmtM->fetchColumn();
 
             $total_harga = $harga_mobil * $durasi;
 
-            // Tambah Fasilitas jika ada
             if ($id_fasilitas) {
                 $stmtF = $this->db->prepare("SELECT harga FROM fasilitas WHERE id_fasilitas = ?");
                 $stmtF->execute([$id_fasilitas]);
                 $total_harga += $stmtF->fetchColumn();
             }
 
-            // Tambah Asuransi (Misal Flat 50rb)
             if ($pake_asuransi) {
                 $total_harga += 50000;
             }
 
-            // Kurangi Voucher jika ada
             if ($id_penukaran) {
-                $stmtV = $this->db->prepare("SELECT v.diskon FROM penukaran p JOIN voucher v ON p.id_voucher = v.id_voucher WHERE p.id_penukaran = ?");
+                $stmtV = $this->db->prepare("SELECT v.diskon_persen FROM penukaran_voucher p JOIN voucher v ON p.id_voucher = v.id_voucher WHERE p.id_penukaran = ?");
                 $stmtV->execute([$id_penukaran]);
-                $total_harga -= $stmtV->fetchColumn();
+                $diskon_persen = $stmtV->fetchColumn();
+                
+                if ($diskon_persen) {
+                    $potongan = ($diskon_persen / 100) * ($harga_mobil * $durasi);
+                    $total_harga -= $potongan;
+                }
             }
 
-            // 3. Handle Upload Bukti Bayar
-            $nama_file = null;
+            // 3. OPTIMASI: Membuka file gambar sebagai Resource Stream (bukan string biner mentah)
+            $bukti_bayar_stream = null;
             if (isset($_FILES['bukti_bayar']) && $_FILES['bukti_bayar']['error'] == 0) {
-                $target_dir = "public/uploads/bukti_bayar/";
-                if (!is_dir($target_dir)) mkdir($target_dir, 0777, true);
-
-                $nama_file = time() . '_' . $_FILES['bukti_bayar']['name'];
-                move_uploaded_file($_FILES['bukti_bayar']['tmp_name'], $target_dir . $nama_file);
+                $bukti_bayar_stream = fopen($_FILES['bukti_bayar']['tmp_name'], 'rb');
+            } else {
+                die("Gagal: Bukti pembayaran wajib diunggah.");
             }
 
-            // 4. Insert ke Tabel Penyewaan
             $kode_sewa = "INV-" . strtoupper(bin2hex(random_bytes(3)));
 
             try {
                 $this->db->beginTransaction();
 
+                // Menggunakan Named Parameter agar binding data LOB lebih rapi dan aman
                 $sql = "INSERT INTO penyewaan (kode_penyewaan, id_pelanggan, id_mobil, id_fasilitas, tgl_penyewaan, tgl_mulai_sewa, tgl_selesai_sewa, durasi_hari, total_harga, status_penyewaan, bukti_bayar) 
-                        VALUES (?, ?, ?, ?, NOW(), ?, ?, ?, ?, 'Pending', ?)";
+                        VALUES (:kode_sewa, :id_pelanggan, :id_mobil, :id_fasilitas, NOW(), :tgl_mulai, :tgl_selesai, :durasi, :total_harga, 'Pending', :bukti_bayar)";
+                
                 $stmt = $this->db->prepare($sql);
-                $stmt->execute([$kode_sewa, $id_pelanggan, $id_mobil, $id_fasilitas, $tgl_mulai, $tgl_selesai, $durasi, $total_harga, $nama_file]);
+                
+                $stmt->bindValue(':kode_sewa', $kode_sewa);
+                $stmt->bindValue(':id_pelanggan', $id_pelanggan);
+                $stmt->bindValue(':id_mobil', $id_mobil);
+                $stmt->bindValue(':id_fasilitas', $id_fasilitas);
+                $stmt->bindValue(':tgl_mulai', $tgl_mulai);
+                $stmt->bindValue(':tgl_selesai', $tgl_selesai);
+                $stmt->bindValue(':durasi', $durasi);
+                $stmt->bindValue(':total_harga', $total_harga);
+                
+                // Menggunakan PDO::PARAM_LOB khusus untuk kolom data gambar/blob besar
+                $stmt->bindParam(':bukti_bayar', $bukti_bayar_stream, PDO::PARAM_LOB);
+                $stmt->execute();
+                
                 $id_penyewaan_baru = $this->db->lastInsertId();
 
-                // TAMBAH 1 POIN PELANGGAN SETIAP MELAKUKAN PENYEWAAN
-                $stmtTambahPoin = $this->db->prepare(
-                    "UPDATE pelanggan
-    SET poin = COALESCE(poin, 0) + 1
-    WHERE id_pelanggan = ?"
-                );
-                $stmtTambahPoin->execute([
-                    $id_pelanggan
-                ]);
+                // Tambah Poin
+                $stmtTambahPoin = $this->db->prepare("UPDATE pelanggan SET poin = COALESCE(poin, 0) + 1 WHERE id_pelanggan = ?");
+                $stmtTambahPoin->execute([$id_pelanggan]);
 
-                // UPDATE STATUS VOUCHER JIKA DIGUNAKAN
+                // Update Voucher
                 if ($id_penukaran) {
-
-                    $stmtUpdVoucher = $this->db->prepare(
-                        "UPDATE penukaran
-        SET
-            status_pakai = 'sudah_dipakai',
-            tgl_pakai = NOW(),
-            id_penyewaan = ?
-        WHERE id_penukaran = ?"
-                    );
-                    $stmtUpdVoucher->execute([
-                        $id_penyewaan_baru,
-                        $id_penukaran
-                    ]);
+                    $stmtUpdVoucher = $this->db->prepare("UPDATE penukaran_voucher SET status_pakai = 'sudah_dipakai', tgl_pakai = NOW(), id_penyewaan = ? WHERE id_penukaran = ?");
+                    $stmtUpdVoucher->execute([$id_penyewaan_baru, $id_penukaran]);
                 }
+                
                 $this->db->commit();
                 header("Location: index.php?page=home&action=sewa_saya&status=success");
             } catch (Exception $e) {
-                $this->db->rollBack();
+                // OPTIMASI: Cek koneksi aktif sebelum melakukan rollback guna mencegah error beruntun
+                if ($this->db->inTransaction()) {
+                    $this->db->rollBack();
+                }
                 die("Gagal menyimpan penyewaan: " . $e->getMessage());
             }
         }

@@ -44,6 +44,24 @@ class ManagerController {
             }
         }
 
+        $loyalEdit = null; // Sediakan variabel default agar tidak error undefined
+        if ($action === 'edit_loyal') {
+            $id = $_GET['id'] ?? null;
+            if ($id) {
+                $loyalModel = new LoyalModel();
+                $loyalEdit = $loyalModel->getLoyalById($id);
+            }
+        }
+
+        $voucherEdit = null; // Sediakan variabel default agar tidak error undefined
+        if ($action === 'edit_voucher') {
+            $id = $_GET['id'] ?? null;
+            if ($id) {
+                $voucherModel = new VoucherModel();
+                $voucherEdit = $voucherModel->getVoucherById($id);
+            }
+        }
+
         // ========== DATA DASHBOARD (hanya dijalankan jika action = home) ==========
         if ($action === 'home') {
             // 1. Total Pendapatan (Status 'complete' ada di tabel penyerahan)

@@ -1,8 +1,4 @@
 <?php
-// =========================================================================
-// FILE: views/user/sidebar/stafflapangan.php (Sidebar Lapangan Lengkap)
-// =========================================================================
-
 // Menentukan menu aktif berdasarkan parameter action dari URL
 $action = isset($_GET['action']) ? $_GET['action'] : 'home';
 ?>

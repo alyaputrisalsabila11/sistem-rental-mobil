@@ -133,6 +133,9 @@ switch ($page) {
     case 'home_pelanggan':
         include 'views/user/dashboard/pelanggan.php';
         break;
+    case 'proses_redeem_voucher':
+        (new AkunController())->proses_redeem_voucher();
+        break;
 
     case 'proses_sewa':
         (new SewaController())->store();

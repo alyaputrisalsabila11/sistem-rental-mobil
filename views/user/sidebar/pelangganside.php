@@ -28,7 +28,7 @@ $action = isset($_GET['action']) ? $_GET['action'] : 'home';
     <!-- Daftar Link Menu -->
     <nav class="flex-1 p-4 space-y-4 overflow-y-auto">
         <!-- Halaman Dashboard Utama -->
-        <a href="index.php?page=home&action=home" 
+        <a href="index.php?page=home&action=home"
            class="flex items-center space-x-3 py-2.5 px-4 rounded-xl text-sm font-bold transition <?= $action === 'home' ? 'bg-white/10 text-white border-l-4 border-indigo-500 shadow-inner' : 'text-slate-400 hover:bg-slate-800' ?>">
             <span>Dashboard</span>
         </a>
@@ -37,6 +37,7 @@ $action = isset($_GET['action']) ? $_GET['action'] : 'home';
         <div>
             <p class="px-4 text-[10px] font-bold uppercase text-slate-500 mb-2 tracking-widest">Transaksi</p>
             <a href="index.php?page=home&action=gallery" class="flex items-center py-2 px-4 rounded-lg text-xs font-bold transition <?= $action === 'gallery' ? 'bg-white/10 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white' ?>">Gallery Mobil</a>
+            <a href="index.php?page=home&action=voucher" class="flex items-center py-2 px-4 rounded-lg text-xs font-bold transition <?= $action === 'voucher' ? 'bg-white/10 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white' ?>">Voucher</a>
         </div>
 
         <!-- Menu Data Saya -->

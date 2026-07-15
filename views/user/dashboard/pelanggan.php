@@ -28,7 +28,7 @@ $user_level_nama = $userData['nama_level'] ?? 'Bronze';
 
 // DETEKSI BLOKIR JIKA ADA DENDA AKTIF YANG BELUM TERVERIFIKASI LUNAS OLEH PETUGAS
 $stmtDenda = $db->prepare("
-    SELECT pg.*, m.merk_mobil 
+    SELECT pg.*, m.merk_mobil
     FROM pengembalian pg
     JOIN penyerahan pen ON pg.id_penyerahan = pen.id_penyerahan
     JOIN penyewaan pny ON pen.id_penyewaan = pny.id_penyewaan
@@ -84,7 +84,7 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
                     <span>AKUN ANDA DIBLOKIR / BANNED AKTIF!</span>
                 </div>
                 <p class="text-xs text-red-600 leading-relaxed mb-3">
-                    Anda dideteksi memiliki denda tertunggak sebesar 
+                    Anda dideteksi memiliki denda tertunggak sebesar
                     <strong>Rp <?= number_format($dendaTertunggak['biaya_kerusakan'] + $dendaTertunggak['denda_telat']); ?></strong>. 
                     Pemesanan sewa baru terkunci otomatis sebelum denda dinyatakan Lunas.
                 </p>
@@ -170,19 +170,37 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
             </div>
 
         <!-- ==================== GALLERY MOBIL ==================== -->
-        <?php elseif ($action === 'gallery'): ?>
+<?php elseif ($action === 'gallery'): ?>
             <?php if ($is_blocked): ?>
                 <div class="bg-white p-12 text-center rounded-2xl border italic text-gray-400">Gallery terkunci karena denda tertunggak.</div>
             <?php else: ?>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <?php
-                    $stmtM = $db->query("SELECT * FROM mobil WHERE status_mobil = 'Tersedia' ORDER BY id_mobil DESC");
+                    // PERBAIKAN: Mengambil semua mobil atau disesuaikan agar status selain 'Tersedia' tetap muncul di gallery
+                    $stmtM = $db->query("SELECT * FROM mobil ORDER BY id_mobil DESC");
                     $mobils = $stmtM->fetchAll(PDO::FETCH_ASSOC);
                     if(!empty($mobils)): foreach($mobils as $m): ?>
-                        <div class="bg-white rounded-3xl border shadow-sm overflow-hidden group hover:shadow-md transition">
+                        <div class="bg-white rounded-3xl border shadow-sm overflow-hidden group hover:shadow-md transition relative">
+                            
+                            <div class="absolute top-3 left-3 z-10">
+                                <?php if ($m['status_mobil'] === 'Tersedia'): ?>
+                                    <span class="bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-sm">
+                                        <i class="fa-solid fa-circle-check mr-1"></i> Tersedia
+                                    </span>
+                                <?php elseif ($m['status_mobil'] === 'Disewa'): ?>
+                                    <span class="bg-amber-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-sm">
+                                        <i class="fa-solid fa-car-side mr-1"></i> Sedang Disewa
+                                    </span>
+                                <?php elseif ($m['status_mobil'] === 'Maintenance'): ?>
+                                    <span class="bg-rose-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-sm">
+                                        <i class="fa-solid fa-wrench mr-1"></i> Perbaikan
+                                    </span>
+                                <?php endif; ?>
+                            </div>
+
                             <div class="h-44 bg-gray-100 relative">
                                 <?php if (!empty($m['gambar']) && @base64_encode($m['gambar'])): ?>
-                                    <img src="data:image/jpeg;base64,<?= base64_encode($m['gambar']); ?>" class="w-full h-full object-cover">
+                                    <img src="data:image/jpeg;base64,<?= base64_encode($m['gambar']); ?>" class="w-full h-full object-cover <?= $m['status_mobil'] !== 'Tersedia' ? 'brightness-75' : ''; ?>">
                                 <?php else: ?>
                                     <div class="w-full h-full flex flex-col items-center justify-center text-slate-300">
                                         <i class="fa-solid fa-car text-5xl"></i>
@@ -195,39 +213,223 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
                                     <h3 class="font-bold text-gray-800 text-sm"><?= $m['merk_mobil']; ?></h3>
                                     <span class="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase"><?= $m['nama_kategori']; ?></span>
                                 </div>
+                                <div class="text-[10px] text-gray-400 border-t pt-2 mt-2">
+                                    <span class="block">Plat Nomor: <strong><?= $m['plat_nomor']; ?></strong></span>
+                                    <span class="block">Warna: <strong><?= $m['warna']; ?></strong></span>
+                                </div>
                                 <p class="text-lg font-black text-indigo-600">Rp <?= number_format($m['harga_dinamis']); ?> <span class="text-xs text-gray-400 font-normal">/hari</span></p>
                                 <div class="grid grid-cols-2 gap-1 text-[10px] text-gray-400 border-t pt-2 mt-2">
                                     <span>CC: <strong><?= number_format($m['cc']); ?> cc</strong></span>
                                     <span>Tahun: <strong><?= $m['tahun']; ?></strong></span>
                                 </div>
+                                
                                 <?php if($activeRental): ?>
                                     <button disabled class="w-full py-2.5 bg-gray-100 text-gray-400 text-xs font-bold rounded-xl cursor-not-allowed">Ada Sewa Aktif</button>
                                 <?php else: ?>
-                                    <a href="index.php?page=home&action=form_sewa&id=<?= $m['id_mobil']; ?>" class="block text-center w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition">Sewa Sekarang</a>
+                                    <?php if ($m['status_mobil'] === 'Tersedia'): ?>
+                                        <a href="index.php?page=home&action=form_sewa&id=<?= $m['id_mobil']; ?>" class="block text-center w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-md shadow-indigo-100">Sewa Sekarang</a>
+                                    <?php elseif ($m['status_mobil'] === 'Disewa'): ?>
+                                        <button disabled class="w-full py-2.5 bg-amber-50 text-amber-600 text-xs font-bold rounded-xl cursor-not-allowed border border-amber-200">Tidak Tersedia (Disewa)</button>
+                                    <?php elseif ($m['status_mobil'] === 'Maintenance'): ?>
+                                        <button disabled class="w-full py-2.5 bg-rose-50 text-rose-600 text-xs font-bold rounded-xl cursor-not-allowed border border-rose-200">Dalam Perbaikan</button>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; else: ?>
-                        <div class="col-span-3 p-12 text-center text-gray-400 italic">Belum ada armada mobil yang tersedia di gallery.</div>
+                        <div class="col-span-3 p-12 text-center text-gray-400 italic">Belum ada armada mobil yang terdaftar di gallery.</div>
                     <?php endif; ?>
                 </div>
             <?php endif; ?>
 
+<?php elseif ($action === 'voucher'): ?>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <?php
+        $stmtV = $db->query("SELECT * FROM voucher WHERE status = 'Aktif' ORDER BY id_voucher DESC");
+        $vouchers = $stmtV->fetchAll(PDO::FETCH_ASSOC);
+        if(!empty($vouchers)): foreach($vouchers as $v): ?>
+            
+            <div class="bg-white rounded-3xl border border-gray-200 shadow-sm overflow-hidden group hover:shadow-md transition flex flex-col justify-between">
+                
+                <div class="bg-gradient-to-r from-indigo-50/80 to-slate-50 text-center py-4 px-5 border-b border-dashed border-gray-200 relative">
+                    <h3 class="font-black text-gray-800 text-sm uppercase tracking-wider">
+                        <?= htmlspecialchars($v['nama_voucher']); ?>
+                    </h3>
+                    <div class="absolute -left-2 -bottom-2 w-4 h-4 bg-slate-50 border-r border-gray-200 rounded-full hidden md:block"></div>
+                    <div class="absolute -right-2 -bottom-2 w-4 h-4 bg-slate-50 border-l border-gray-200 rounded-full hidden md:block"></div>
+                </div>
+
+                <div class="p-6 space-y-4 flex-1 flex flex-col justify-between">
+                    <div class="text-center space-y-2">
+                        <p class="text-2xl font-black text-indigo-600">
+                            <?= htmlspecialchars(floatval($v['diskon_persen'])); ?>%
+                            <span class="text-xs text-indigo-400 font-normal tracking-wide">Diskon</span>
+                        </p>
+                        
+                        <span class="inline-block bg-slate-50 border border-gray-200 text-gray-500 font-mono text-[11px] px-3 py-1 rounded-xl">
+                            Kode: <strong class="text-gray-800 uppercase"><?= htmlspecialchars($v['kode_voucher']); ?></strong>
+                        </span>
+                    </div>
+
+                    <div class="space-y-1.5 text-[11px] text-gray-400 border-t border-gray-100 pt-3.5">
+                        <div class="flex justify-between items-center">
+                            <span>Harga Poin:</span>
+                            <strong class="text-gray-600 font-semibold"><?= number_format($v['harga_poin']); ?> pts</strong>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span>Mulai Berlaku:</span>
+                            <strong class="text-gray-600 font-semibold"><?= date('d M Y', strtotime($v['tgl_mulai'])); ?></strong>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span>Hingga Sampai:</span>
+                            <strong class="text-gray-600 font-semibold"><?= date('d M Y', strtotime($v['tgl_selesai'])); ?></strong>
+                        </div>
+                    </div>
+
+                    <a href="index.php?page=home&action=redeem_voucher&id=<?= $v['id_voucher'] ?>" 
+                       class="block text-center bg-blue-600 text-white font-semibold py-2 px-4 rounded-xl hover:bg-blue-700 transition w-full">
+                        Tukar Voucher
+                    </a>
+                </div> </div> <?php endforeach; else: ?>
+            <div class="col-span-3 p-12 text-center text-gray-400 italic">Belum ada voucher aktif yang tersedia.</div>
+        <?php endif; ?>
+    </div>
+
+<?php elseif ($action === 'redeem_voucher'): ?>
+    <?php
+    // 1. Ambil ID Voucher dari parameter URL GET
+    $id_voucher = isset($_GET['id']) ? intval($_GET['id']) : 0;
+    
+    // 2. Koneksi database & ambil data voucher
+    $db = Database::getConnection();
+    $stmtVoucher = $db->prepare("SELECT * FROM voucher WHERE id_voucher = ? LIMIT 1");
+    $stmtVoucher->execute([$id_voucher]);
+    $voucher = $stmtVoucher->fetch(PDO::FETCH_ASSOC);
+
+    // 3. Ambil data pelanggan untuk menampilkan poin saat ini
+    $id_pelanggan = $_SESSION['user_id'] ?? 0;
+    $stmtPelanggan = $db->prepare("SELECT * FROM pelanggan WHERE id_pelanggan = ? LIMIT 1");
+    $stmtPelanggan->execute([$id_pelanggan]);
+    $pelanggan = $stmtPelanggan->fetch(PDO::FETCH_ASSOC);
+
+    // Proteksi jika data tidak ditemukan
+    if (!$voucher || !$pelanggan) {
+        echo "<div class='p-6 text-center text-red-500 font-bold'>Data voucher atau pelanggan tidak valid!</div>";
+        echo "<script>window.location.href='index.php?page=home&action=voucher';</script>";
+        exit;
+    }
+
+    // Kalkulasi kecukupan poin
+    $sisa_poin = $pelanggan['poin'] - $voucher['harga_poin'];
+    $is_poin_cukup = $sisa_poin >= 0;
+    ?>
+
+    <div class="max-w-2xl mx-auto my-10 px-4">
+        
+        <?php if (isset($_SESSION['error'])): ?>
+            <div class="mb-4 p-4 bg-red-100 border border-red-300 text-red-700 rounded-2xl font-bold text-sm shadow-sm flex items-center gap-2">
+                <span>⚠️</span> <?= $_SESSION['error']; unset($_SESSION['error']); ?>
+            </div>
+        <?php endif; ?>
+
+        <?php if (isset($_SESSION['success'])): ?>
+            <div class="mb-4 p-4 bg-emerald-100 border border-emerald-300 text-emerald-700 rounded-2xl font-bold text-sm shadow-sm flex items-center gap-2">
+                <span>✅</span> <?= $_SESSION['success']; unset($_SESSION['success']); ?>
+            </div>
+        <?php endif; ?>
+        <div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100">
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6 text-white text-center">
+                <span class="text-xs uppercase font-bold tracking-widest bg-white/20 px-3 py-1 rounded-full">Konfirmasi Penukaran</span>
+                <h2 class="text-2xl font-black mt-2">Apakah Anda Yakin?</h2>
+                <p class="text-blue-100 text-xs mt-1">Silakan periksa detail penukaran voucher di bawah ini.</p>
+            </div>
+
+            <form action="index.php?page=proses_redeem_voucher" method="POST" class="p-8 space-y-6">
+                <input type="hidden" name="id_voucher" value="<?= $voucher['id_voucher'] ?>">
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Nama Voucher</label>
+                    <input type="text" value="<?= htmlspecialchars($voucher['nama_voucher']) ?>" 
+                           class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-gray-800 font-semibold focus:outline-none cursor-not-allowed" 
+                           readonly>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Poin Anda Sekarang</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-500 text-sm font-bold">⭐</span>
+                            <input type="text" value="<?= number_format($pelanggan['poin']) ?> Poin" 
+                                   class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm text-gray-700 font-bold focus:outline-none cursor-not-allowed" 
+                                   readonly>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-red-500 uppercase tracking-wider mb-2">Biaya Poin</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-red-500 text-sm font-bold">-</span>
+                            <input type="text" value="<?= number_format($voucher['harga_poin']) ?> Poin" 
+                                   class="w-full bg-red-50 border border-red-200 rounded-xl pl-10 pr-4 py-3 text-sm text-red-600 font-bold focus:outline-none cursor-not-allowed" 
+                                   readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="border-dashed border-gray-200 my-4">
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Estimasi Sisa Poin Anda</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-500 text-sm font-bold">✨</span>
+                        <input type="text" value="<?= $is_poin_cukup ? number_format($sisa_poin) . ' Poin' : 'Poin Tidak Cukup!' ?>" 
+                               class="w-full <?= $is_poin_cukup ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-100 border-red-300 text-red-600 font-black' ?> border rounded-xl pl-10 pr-4 py-3 text-sm font-bold focus:outline-none cursor-not-allowed" 
+                               readonly>
+                    </div>
+                </div>
+
+                <?php if (!$is_poin_cukup): ?>
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl">
+                        <div class="flex">
+                            <div class="ml-3">
+                                <p class="text-xs font-bold text-red-800">Maaf, Poin Anda Kurang!</p>
+                                <p class="text-[11px] text-red-700 mt-1">Anda membutuhkan minimal <?= number_format($voucher['harga_poin'] - $pelanggan['poin']) ?> poin tambahan untuk menukar voucher ini.</p>
+                            </div>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <div class="flex flex-col sm:flex-row gap-3 pt-4">
+                    <a href="index.php?page=home&action=voucher"
+                       class="w-full sm:w-1/2 text-center bg-gray-100 text-gray-700 font-semibold py-3 px-4 rounded-xl hover:bg-gray-200 transition text-sm">
+                        Kembali
+                    </a>
+
+                    <button type="submit" 
+                            class="w-full sm:w-1/2 bg-blue-600 text-white font-semibold py-3 px-4 rounded-xl hover:bg-blue-700 transition text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+                            <?= !$is_poin_cukup ? 'disabled' : '' ?>>
+                        <span>Ya, Konfirmasi Tukar</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
         <!-- ==================== FORM SEWA KOMPLET ==================== -->
-        <?php elseif ($action === 'form_sewa'): 
+<?php elseif ($action === 'form_sewa'):
             $id_mobil = $_GET['id'] ?? 0;
             $stmtMob = $db->prepare("SELECT * FROM mobil WHERE id_mobil = ?");
             $stmtMob->execute([$id_mobil]);
             $m = $stmtMob->fetch(PDO::FETCH_ASSOC);
         ?>
             <div class="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Kolom Kiri: Formulir Isian -->
                 <div class="lg:col-span-2 bg-white p-6 rounded-2xl border shadow-sm space-y-4">
                     <h3 class="font-bold text-gray-800 text-base border-b pb-2 flex items-center gap-2">
                         <i class="fa-solid fa-file-signature text-indigo-600"></i>
-                        <span>Formulir Pengajuan Sewa: <?= $m['merk_mobil']; ?></span>
+                        <span>Formulir Pengajuan Sewa: <?= htmlspecialchars($m['merk_mobil']); ?></span>
                     </h3>
-                    <form action="index.php?page=proses_sewa" method="POST" class="space-y-4" id="formRent">
+                    
+                    <form action="index.php?page=proses_sewa" method="POST" enctype="multipart/form-data" class="space-y-4" id="formRent">
                         <input type="hidden" name="id_mobil" id="id_mobil" value="<?= $id_mobil; ?>">
                         <input type="hidden" id="harga_harian" value="<?= $m['harga_dinamis']; ?>">
                         
@@ -249,7 +451,7 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
                                 <?php 
                                 $stmtF = $db->query("SELECT * FROM fasilitas WHERE status = 'Tersedia'");
                                 while($f = $stmtF->fetch(PDO::FETCH_ASSOC)): ?>
-                                    <option value="<?= $f['id_fasilitas']; ?>" data-harga="<?= $f['harga']; ?>"><?= $f['nama_fasilitas']; ?> (+Rp <?= number_format($f['harga']); ?>)</option>
+                                    <option value="<?= $f['id_fasilitas']; ?>" data-harga="<?= $f['harga']; ?>"><?= htmlspecialchars($f['nama_fasilitas']); ?> (+Rp <?= number_format($f['harga']); ?>)</option>
                                 <?php endwhile; ?>
                             </select>
                         </div>
@@ -262,9 +464,18 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
                                 $stmtV = $db->prepare("SELECT pv.*, v.nama_voucher, v.diskon_persen FROM penukaran_voucher pv JOIN voucher v ON pv.id_voucher = v.id_voucher WHERE pv.id_pelanggan = ? AND pv.status_pakai = 'belum_dipakai'");
                                 $stmtV->execute([$user_id]);
                                 while($v = $stmtV->fetch(PDO::FETCH_ASSOC)): ?>
-                                    <option value="<?= $v['id_penukaran']; ?>" data-diskon="<?= $v['diskon_persen']; ?>"><?= $v['nama_voucher']; ?> (Diskon <?= $v['diskon_persen']; ?>%)</option>
+                                    <option value="<?= $v['id_penukaran']; ?>" data-diskon="<?= $v['diskon_persen']; ?>"><?= htmlspecialchars($v['nama_voucher']); ?> (Diskon <?= $v['diskon_persen']; ?>%)</option>
                                 <?php endwhile; ?>
                             </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Upload Bukti Pembayaran</label>
+                            <input type="file" name="bukti_bayar" id="bukti_bayar" accept="image/*" required 
+                                class="w-full border p-2 rounded-xl text-xs bg-white outline-none focus:ring-2 focus:ring-indigo-500 
+                                       file:mr-4 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs 
+                                       file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer">
+                            <p class="text-[10px] text-gray-400 mt-1">* Format yang didukung: JPG, JPEG, PNG.</p>
                         </div>
 
                         <div class="p-3 bg-orange-50 border border-orange-200 rounded-2xl flex justify-between items-center text-xs">
@@ -284,7 +495,6 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
                     </form>
                 </div>
 
-                <!-- Kolom Kanan: Ringkasan Kalkulasi -->
                 <div class="bg-slate-900 text-white p-5 rounded-3xl h-fit space-y-4">
                     <h4 class="font-bold text-xs uppercase tracking-widest text-slate-400 border-b border-slate-800 pb-2">Kalkulasi Ringkasan Biaya</h4>
                     <div class="space-y-2 text-xs">
@@ -402,9 +612,9 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
                 <div class="space-y-4">
                     <?php
                     $stmtHist = $db->prepare("
-                        SELECT p.*, m.merk_mobil, m.plat_nomor, pen.tgl_penyerahan 
-                        FROM penyewaan p 
-                        JOIN mobil m ON p.id_mobil = m.id_mobil 
+                        SELECT p.*, m.merk_mobil, m.plat_nomor, pen.tgl_penyerahan
+                        FROM penyewaan p
+                        JOIN mobil m ON p.id_mobil = m.id_mobil
                         JOIN penyerahan pen ON p.id_penyewaan = pen.id_penyewaan
                         WHERE p.id_pelanggan = ? AND pen.status_sewa = 'complete'
                         ORDER BY p.id_penyewaan DESC
@@ -481,32 +691,92 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
             </div>
 
         <!-- ==================== TAB VOUCHER SAYA ==================== -->
-        <?php elseif ($action === 'voucher_saya'): ?>
-            <div class="bg-white p-6 rounded-2xl border">
-                <h3 class="font-bold text-gray-800 mb-4">Daftar Voucher Saya</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <?php
-                    $stmtVouc = $db->prepare("
-                        SELECT pv.id_penukaran, pv.status_pakai, v.kode_voucher, v.nama_voucher, v.diskon_persen 
-                        FROM penukaran_voucher pv
-                        JOIN voucher v ON pv.id_voucher = v.id_voucher
-                        WHERE pv.id_pelanggan = ?
-                    ");
-                    $stmtVouc->execute([$user_id]);
-                    $vouchers = $stmtVouc->fetchAll(PDO::FETCH_ASSOC);
+<?php elseif ($action === 'voucher_saya'): ?>
+            <?php
+            // 1. Ambil seluruh data penukaran voucher milik pelanggan
+            $stmtVouc = $db->prepare("
+                SELECT pv.id_penukaran, pv.status_pakai, v.kode_voucher, v.nama_voucher, v.diskon_persen 
+                FROM penukaran_voucher pv
+                JOIN voucher v ON pv.id_voucher = v.id_voucher
+                WHERE pv.id_pelanggan = ?
+                ORDER BY pv.id_penukaran DESC
+            ");
+            $stmtVouc->execute([$user_id]);
+            $all_vouchers = $stmtVouc->fetchAll(PDO::FETCH_ASSOC);
 
-                    if(!empty($vouchers)): foreach($vouchers as $v): ?>
-                        <div class="p-4 rounded-xl border bg-indigo-50/50 border-indigo-100 flex justify-between items-center text-xs">
-                            <div>
-                                <span class="font-mono font-bold text-indigo-700 block text-sm"><?= $v['kode_voucher']; ?></span>
-                                <span class="text-gray-500 font-bold mt-1 block"><?= $v['nama_voucher']; ?></span>
-                                <span class="text-[10px] text-gray-400 uppercase tracking-widest block mt-0.5">Potongan Harga: <?= $v['diskon_persen']; ?>%</span>
-                            </div>
-                            <span class="px-2 py-1 rounded text-[9px] font-black uppercase <?= $v['status_pakai'] === 'belum_dipakai' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-400'; ?>"><?= $v['status_pakai']; ?></span>
+            // 2. Pisahkan data ke dalam kelompok array berdasarkan status pakai
+            $vouchers_belum = [];
+            $vouchers_sudah = [];
+            foreach ($all_vouchers as $v) {
+                if ($v['status_pakai'] === 'belum_dipakai') {
+                    $vouchers_belum[] = $v;
+                } else {
+                    $vouchers_sudah[] = $v;
+                }
+            }
+            ?>
+
+            <div class="bg-white p-6 rounded-2xl border shadow-sm">
+                <h3 class="font-bold text-gray-800 text-base mb-6 border-b pb-3">Daftar Koleksi Voucher Saya</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between border-b border-indigo-100 pb-2">
+                            <h4 class="font-bold text-indigo-600 text-xs flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></span>
+                                Belum Dipakai (<?= count($vouchers_belum); ?>)
+                            </h4>
                         </div>
-                    <?php endforeach; else: ?>
-                        <div class="py-12 text-center text-gray-400 italic col-span-2">Belum ada voucher yang terhubung dengan akun Anda.</div>
-                    <?php endif; ?>
+                        
+                        <div class="space-y-3">
+                            <?php if(!empty($vouchers_belum)): foreach($vouchers_belum as $v): ?>
+                                <div class="p-4 rounded-xl border bg-indigo-50/40 border-indigo-100 flex justify-between items-center text-xs transition hover:border-indigo-300">
+                                    <div class="space-y-1">
+                                        <span class="font-mono font-black text-indigo-700 block text-sm tracking-wide"><?= htmlspecialchars($v['kode_voucher']); ?></span>
+                                        <span class="text-gray-700 font-bold block mt-0.5"><?= htmlspecialchars($v['nama_voucher']); ?></span>
+                                        <span class="text-[10px] text-gray-400 uppercase tracking-widest block mt-0.5">Potongan Harga: <?= htmlspecialchars(floatval($v['diskon_persen'])); ?>%</span>
+                                    </div>
+                                    <span class="px-2.5 py-1 rounded-md text-[9px] font-black uppercase bg-indigo-100 text-indigo-700 tracking-wider shadow-sm">
+                                        Belum Dipakai
+                                    </span>
+                                </div>
+                            <?php endforeach; else: ?>
+                                <div class="py-10 text-center text-gray-400 text-xs italic bg-slate-50 rounded-xl border border-dashed">
+                                    Tidak ada voucher aktif yang tersedia.
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between border-b border-gray-200 pb-2">
+                            <h4 class="font-bold text-gray-500 text-xs flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+                                Sudah Terpakai / Hangus (<?= count($vouchers_sudah); ?>)
+                            </h4>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <?php if(!empty($vouchers_sudah)): foreach($vouchers_sudah as $v): ?>
+                                <div class="p-4 rounded-xl border bg-gray-50 border-gray-200 flex justify-between items-center text-xs opacity-65 select-none">
+                                    <div class="space-y-1">
+                                        <span class="font-mono font-bold text-gray-400 block text-sm line-through tracking-wide"><?= htmlspecialchars($v['kode_voucher']); ?></span>
+                                        <span class="text-gray-400 font-medium block mt-0.5 line-through"><?= htmlspecialchars($v['nama_voucher']); ?></span>
+                                        <span class="text-[10px] text-gray-400 block mt-0.5">Potongan Harga: <?= htmlspecialchars(floatval($v['diskon_persen'])); ?>%</span>
+                                    </div>
+                                    <span class="px-2.5 py-1 rounded-md text-[9px] font-black uppercase bg-gray-200 text-gray-400 tracking-wider">
+                                        Sudah Dipakai
+                                    </span>
+                                </div>
+                            <?php endforeach; else: ?>
+                                <div class="py-10 text-center text-gray-400 text-xs italic bg-slate-50 rounded-xl border border-dashed">
+                                    Belum ada riwayat penggunaan voucher.
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -525,6 +795,13 @@ $activeRental = $stmtActive->fetch(PDO::FETCH_ASSOC);
                             <?= substr($userData['nama_lengkap'], 0, 1); ?>
                         </div>
                     </div>
+                    <div class="text-left">
+                            <span class="text-[9px] text-indigo-400 uppercase block tracking-wider font-bold">Poin</span>
+                            <span class="text-2xl font-black text-amber-400 mt-0.5 inline-block">
+                                <?= number_format($userData['poin'] ?? 0, 0, ',', '.'); ?>
+                                <span class="text-xs font-bold text-white">Pts</span>
+                            </span>
+                        </div>
                     <div class="z-10">
                         <span class="text-[9px] text-gray-400 uppercase block">Loyal Member</span>
                         <span class="text-sm font-bold text-indigo-300 uppercase tracking-widest mt-0.5 inline-block">★ <?= $user_level_nama; ?></span>
