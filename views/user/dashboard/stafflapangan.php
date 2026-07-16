@@ -122,8 +122,13 @@ try {
                                     <td class="p-4 font-bold text-gray-800"><?= $h['merk_mobil']; ?> (<?= $h['plat_nomor']; ?>)</td>
                                     <td class="p-4"><?= $h['nama_lengkap']; ?> (<?= $h['no_telp']; ?>)</td>
                                     <td class="p-4"><?= $h['tgl_mulai_sewa']; ?> s.d <?= $h['tgl_selesai_sewa']; ?></td>
-                                    <td class="p-4 text-center">
-                                        <a href="index.php?page=home_lapangan&action=form_handover&id=<?= $h['id_penyewaan']; ?>" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-xl transition shadow">Serahkan Kunci</a>
+                                    <td class="p-4">
+                                        <div class="flex flex-col items-stretch gap-2 max-w-[160px] mx-auto">
+                                            <a href="index.php?page=home_lapangan&action=detail_handover&id=<?= $h['id_penyewaan']; ?>"
+                                               class="text-center bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded-xl transition shadow text-xs">
+                                                Detail
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; else: ?>
@@ -142,7 +147,10 @@ try {
             $d = $stmtD->fetch(PDO::FETCH_ASSOC);
         ?>
             <div class="max-w-xl bg-white p-6 rounded-2xl border shadow-sm space-y-4 mx-auto">
-                <h3 class="font-bold text-gray-800 text-sm border-b pb-2">Formulir Serah Terima Mobil</h3>
+                <div class="flex items-center justify-between border-b pb-2">
+                    <h3 class="font-bold text-gray-800 text-sm">Formulir Serah Terima Mobil</h3>
+                    <a href="index.php?page=home_lapangan&action=detail_handover&id=<?= $id_penyewaan; ?>" class="text-xs font-bold text-indigo-600 hover:underline">&larr; Kembali</a>
+                </div>
                 <form action="index.php?page=home_lapangan&action=proses_handover" method="POST" enctype="multipart/form-data" class="space-y-4">
                     <input type="hidden" name="id_penyewaan" value="<?= $id_penyewaan; ?>">
                     
@@ -182,6 +190,61 @@ try {
                         Kirim & Serahkan Kunci
                     </button>
                 </form>
+            </div>
+
+        <!-- HALAMAN DETAIL BOOKING (READ-ONLY, sebelum serah kunci) -->
+        <?php elseif ($action === 'detail_handover'):
+            $id_penyewaan = $_GET['id'] ?? 0;
+            $stmtDt = $db->prepare("
+                SELECT p.*, m.merk_mobil, m.plat_nomor, m.tahun, m.warna, m.cc, m.harga_dinamis,
+                       pl.nama_lengkap, pl.email, pl.no_telp, pl.alamat, pl.no_ktp,
+                       f.nama_fasilitas, f.harga AS harga_fasilitas
+                FROM penyewaan p
+                JOIN mobil m ON p.id_mobil = m.id_mobil
+                JOIN pelanggan pl ON p.id_pelanggan = pl.id_pelanggan
+                LEFT JOIN fasilitas f ON p.id_fasilitas = f.id_fasilitas
+                WHERE p.id_penyewaan = ?
+            ");
+            $stmtDt->execute([$id_penyewaan]);
+            $dt = $stmtDt->fetch(PDO::FETCH_ASSOC);
+        ?>
+            <div class="max-w-xl bg-white p-6 rounded-2xl border shadow-sm space-y-4 mx-auto">
+                <div class="flex items-center justify-between border-b pb-2">
+                    <h3 class="font-bold text-gray-800 text-sm">Detail Booking — <?= htmlspecialchars($dt['kode_penyewaan'] ?? ''); ?></h3>
+                    <a href="index.php?page=home_lapangan&action=serah_mobil" class="text-xs font-bold text-indigo-600 hover:underline">&larr; Kembali</a>
+                </div>
+                <?php if ($dt): ?>
+                    <div>
+                        <p class="font-bold text-gray-800 uppercase text-[11px] mb-2">Data Pelanggan</p>
+                        <div class="grid grid-cols-2 gap-y-1.5 text-xs">
+                            <p class="text-gray-400">Nama</p><p class="font-semibold text-gray-800"><?= htmlspecialchars($dt['nama_lengkap']); ?></p>
+                            <p class="text-gray-400">No. Telp</p><p class="font-semibold text-gray-800"><?= htmlspecialchars($dt['no_telp'] ?? '-'); ?></p>
+                            <p class="text-gray-400">Email</p><p class="font-semibold text-gray-800"><?= htmlspecialchars($dt['email'] ?? '-'); ?></p>
+                            <p class="text-gray-400">Alamat</p><p class="font-semibold text-gray-800"><?= htmlspecialchars($dt['alamat'] ?? '-'); ?></p>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="font-bold text-gray-800 uppercase text-[11px] mb-2 border-t pt-3">Data Mobil</p>
+                        <div class="grid grid-cols-2 gap-y-1.5 text-xs">
+                            <p class="text-gray-400">Mobil</p><p class="font-semibold text-gray-800"><?= htmlspecialchars($dt['merk_mobil']); ?> (<?= htmlspecialchars($dt['plat_nomor']); ?>)</p>
+                            <p class="text-gray-400">Tahun / Warna</p><p class="font-semibold text-gray-800"><?= htmlspecialchars($dt['tahun']); ?> / <?= htmlspecialchars($dt['warna']); ?></p>
+                            <p class="text-gray-400">Fasilitas</p><p class="font-semibold text-gray-800"><?= htmlspecialchars($dt['nama_fasilitas'] ?? 'Tidak ada'); ?></p>
+                            <p class="text-gray-400">Total Harga</p><p class="font-bold text-indigo-600">Rp <?= number_format((float)$dt['total_harga'], 0, ',', '.'); ?></p>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="font-bold text-gray-800 uppercase text-[11px] mb-2 border-t pt-3">Tanggal Penyewaan</p>
+                        <div class="grid grid-cols-2 gap-y-1.5 text-xs">
+                            <p class="text-gray-400">Tanggal Mulai</p><p class="font-semibold text-gray-800"><?= htmlspecialchars($dt['tgl_mulai_sewa'] ?? '-'); ?></p>
+                            <p class="text-gray-400">Tanggal Selesai</p><p class="font-semibold text-gray-800"><?= htmlspecialchars($dt['tgl_selesai_sewa'] ?? '-'); ?></p>
+                        </div>
+                    </div>
+                    <a href="index.php?page=home_lapangan&action=form_handover&id=<?= $id_penyewaan; ?>" class="block text-center w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl transition shadow">
+                        Lanjut Serahkan Kunci
+                    </a>
+                <?php else: ?>
+                    <p class="text-xs text-gray-400 italic">Data tidak ditemukan.</p>
+                <?php endif; ?>
             </div>
 
         <!-- ==================== 2. DATA DI SEWA (RETURN) ==================== -->
@@ -237,7 +300,7 @@ try {
         ?>
             <div class="max-w-xl bg-white p-6 rounded-2xl border shadow-sm space-y-4 mx-auto">
                 <h3 class="font-bold text-gray-800 text-sm border-b pb-2">Formulir Penerimaan Pengembalian Mobil</h3>
-                <form action="index.php?page=home_lapangan&action=proses_return" method="POST" class="space-y-4">
+                <form action="index.php?page=home_lapangan&action=proses_return" method="POST" enctype="multipart/form-data" class="space-y-4">
                     <input type="hidden" name="id_penyerahan" value="<?= $id_penyerahan; ?>">
                     
                     <div class="grid grid-cols-2 gap-4 text-xs bg-gray-50 p-4 rounded-xl">
@@ -249,6 +312,25 @@ try {
                             <span class="text-gray-400 block font-bold">Armada Mobil:</span>
                             <span class="font-bold text-gray-800"><?= $r['merk_mobil']; ?> (<?= $r['plat_nomor']; ?>)</span>
                         </div>
+                        <div>
+                            <span class="text-gray-400 block font-bold">Nama Karyawan:</span>
+                            <span class="font-bold text-gray-800"><?= $staff_name; ?></span>
+                        </div>
+                        <div>
+                            <label class="text-gray-400 block font-bold mb-1">Tanggal Pengembalian</label>
+                            <input type="date" name="tgl_pengembalian" value="<?= date('Y-m-d'); ?>" required class="w-full border p-2.5 rounded-xl text-xs bg-white">
+                        </div>
+                        <div>
+                            <label class="text-gray-400 block font-bold mb-1">Waktu Pengembalian</label>
+                            <input type="time" name="jam_pengembalian" value="<?= date('H:i'); ?>" required class="w-full border p-2.5 rounded-xl text-xs bg-white">
+                        </div>
+                        <div>
+                            <span class="text-gray-400 block font-bold mb-1">Kondisi Mobil</span>
+                            <select name="kondisi_mobil_awal" required class="w-full border p-2.5 rounded-xl text-xs bg-white">
+                                <option value="Normal">Normal</option>
+                                <option value="Rusak">Rusak</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
@@ -259,11 +341,19 @@ try {
                         <div>
                             <label class="block text-xs font-bold text-gray-600 mb-1">BBM Akhir Kendaraan</label>
                             <select name="bbm_akhir" required class="w-full border p-2.5 rounded-xl text-xs bg-white">
-                                <option value="Full">Full</option>
+                                <option value="Penuh">Penuh</option>
+                                <option value="3/4">3/4</option>
                                 <option value="1/2">1/2</option>
-                                <option value="Empty">Empty</option>
+                                <option value="1/4">1/4</option>
+                                <option value="Kosong">Kosong</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 mb-1">Foto Kondisi Kendaraan</label>
+                        <input type="file" name="foto_kondisi[]" accept="image/*" multiple required class="w-full border p-2.5 rounded-xl text-xs bg-gray-50">
+                        <p class="text-[10px] text-gray-400 mt-1">Bisa unggah lebih dari satu foto (tampak depan, belakang, samping, dsb).</p>
                     </div>
 
                     <div class="flex gap-3">

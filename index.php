@@ -125,7 +125,20 @@ switch ($page) {
 
     // ======== STAFF LAPANGAN DASHBOARD ========
     case 'home_lapangan':
-        include 'views/user/dashboard/stafflapangan.php';
+        $karyawanController = new KaryawanController();
+        $lapanganAction = $_GET['action'] ?? '';
+
+        // PERBAIKAN: Route proses form handover/return/cek kondisi ke KaryawanController
+        // agar data benar-benar tersimpan ke database sebelum redirect.
+        if ($lapanganAction === 'proses_handover') {
+            $karyawanController->proses_handover();
+        } elseif ($lapanganAction === 'proses_return') {
+            $karyawanController->proses_return();
+        } elseif ($lapanganAction === 'proses_cek_kondisi') {
+            $karyawanController->proses_cek_kondisi();
+        } else {
+            include 'views/user/dashboard/stafflapangan.php';
+        }
         break;
 
     // ======== PELANGGAN DASHBOARD ========

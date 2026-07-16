@@ -164,9 +164,34 @@ class KaryawanController {
         $km_akhir = $_POST['km_akhir'];
         $bbm_akhir = $_POST['bbm_akhir'];
 
+        // PERBAIKAN: Ambil tanggal & jam pengembalian dari input petugas (bukan lagi otomatis CURDATE/NOW)
+        $tgl_pengembalian = !empty($_POST['tgl_pengembalian']) ? $_POST['tgl_pengembalian'] : date('Y-m-d');
+        $jam_pengembalian = !empty($_POST['jam_pengembalian']) ? $_POST['jam_pengembalian'] : date('H:i');
+
+        // PERBAIKAN: Ambil kondisi awal pilihan petugas (Normal/Rusak) lalu petakan ke nilai kondisi_mobil di DB
+        $kondisi_awal = $_POST['kondisi_mobil_awal'] ?? 'Normal';
+        $kondisi_mobil = ($kondisi_awal === 'Rusak') ? 'Rusak Ringan' : 'Baik';
+
+        // Unggah foto kondisi kendaraan (bisa lebih dari satu file)
+        $foto_kondisi_list = [];
+        if (!empty($_FILES['foto_kondisi']['name'][0])) {
+            $uploadDir = "public/uploads/kondisi_return/";
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            foreach ($_FILES['foto_kondisi']['name'] as $i => $namaFile) {
+                if (!empty($namaFile)) {
+                    $namaUnik = time() . "_" . $i . "_" . $namaFile;
+                    move_uploaded_file($_FILES['foto_kondisi']['tmp_name'][$i], $uploadDir . $namaUnik);
+                    $foto_kondisi_list[] = $namaUnik;
+                }
+            }
+        }
+        $foto_kondisi_string = implode(',', $foto_kondisi_list);
+
         // 1. Masukkan data pengembalian awal dengan nilai denda default
-        $stmt = $db->prepare("INSERT INTO pengembalian (id_penyerahan, id_lokasi, id_karyawan, tgl_dikembaliakan, jam_dikembalikan, km_akhir, bbm_akhir, kondisi_mobil, biaya_kerusakan, denda_telat) VALUES (?, ?, ?, CURDATE(), NOW(), ?, ?, 'Baik', 0, 0)");
-        $stmt->execute([$id_penyerahan, $id_lokasi, $id_karyawan, $km_akhir, $bbm_akhir]);
+        $stmt = $db->prepare("INSERT INTO pengembalian (id_penyerahan, id_lokasi, id_karyawan, tgl_dikembalikan, jam_dikembalikan, km_akhir, bbm_akhir, kondisi_mobil, foto_kondisi, biaya_kerusakan, denda_telat) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)");
+        $stmt->execute([$id_penyerahan, $id_lokasi, $id_karyawan, $tgl_pengembalian, $jam_pengembalian, $km_akhir, $bbm_akhir, $kondisi_mobil, $foto_kondisi_string]);
 
         // 2. Update status sewa penyerahan menjadi complete
         $stmtPen = $db->prepare("UPDATE penyerahan SET status_sewa = 'complete' WHERE id_penyerahan = ?");
