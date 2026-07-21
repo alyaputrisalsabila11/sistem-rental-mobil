@@ -62,12 +62,25 @@ class ManagerController {
             }
         }
 
+        // Tambahkan ini untuk handle detail perbaikan/kerusakan
+        $detailKerusakan = null;
+        if ($action === 'detail') {
+            $id = $_GET['id'] ?? null;
+            if ($id) {
+                // Sesuai dengan screenshot "Formulir Penyelesaian & Estimasi Biaya Perbaikan"
+                // Silakan sesuaikan nama tabel dan primary key-nya jika berbeda di databasemu
+                $stmt = $this->db->prepare("SELECT * FROM kondisi_mobil WHERE id_kondisi = :id");
+                $stmt->execute(['id' => $id]);
+                $detailKerusakan = $stmt->fetch(PDO::FETCH_ASSOC);
+            }
+        }
+
         // ========== DATA DASHBOARD (hanya dijalankan jika action = home) ==========
         if ($action === 'home') {
             // 1. Total Pendapatan (Status 'complete' ada di tabel penyerahan)
             $totalPendapatan = $this->db->query(
-                "SELECT SUM(p.total_harga) FROM penyewaan p 
-                 JOIN penyerahan ps ON p.id_penyewaan = ps.id_penyewaan 
+                "SELECT SUM(p.total_harga) FROM penyewaan p
+                 JOIN penyerahan ps ON p.id_penyewaan = ps.id_penyewaan
                  WHERE ps.status_sewa = 'complete'"
             )->fetchColumn() ?: 0;
 
@@ -125,17 +138,6 @@ class ManagerController {
                  GROUP BY l.id_level ORDER BY l.id_level"
             )->fetchAll(PDO::FETCH_ASSOC);
 
-            // 10. Maintenance Alert Terbaru
-            $kerusakanAlert = $this->db->query(
-                "SELECT pg.biaya_kerusakan, jk.nama_kerusakan, m.plat_nomor, pg.jam_dikembalikan
-                 FROM pengembalian pg
-                 LEFT JOIN jenis_kerusakan jk ON pg.id_kerusakan = jk.id_kerusakan
-                 LEFT JOIN penyerahan pny ON pg.id_penyerahan = pny.id_penyerahan
-                 LEFT JOIN penyewaan ps ON pny.id_penyewaan = ps.id_penyewaan
-                 LEFT JOIN mobil m ON ps.id_mobil = m.id_mobil
-                 WHERE pg.biaya_kerusakan > 0
-                 ORDER BY pg.jam_dikembalikan DESC LIMIT 5"
-            )->fetchAll(PDO::FETCH_ASSOC);
         }
 
         // Load View

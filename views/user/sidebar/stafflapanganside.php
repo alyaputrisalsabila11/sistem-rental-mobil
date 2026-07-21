@@ -1,0 +1,89 @@
+<?php
+// Menentukan menu aktif berdasarkan parameter action dari URL
+$action = isset($_GET['action']) ? $_GET['action'] : 'home';
+
+// Mendapatkan inisial dinamis dari nama user untuk avatar profil
+$userName = $_SESSION['user_name'] ?? 'Staff Lapangan';
+$initials = '';
+if (!empty($userName)) {
+    $words = explode(' ', trim($userName));
+    $initials .= strtoupper(substr($words[0], 0, 1));
+    if (count($words) > 1) {
+        $initials .= strtoupper(substr($words[1], 0, 1));
+    }
+} else {
+    $initials = 'SL';
+}
+?>
+<aside class="w-64 bg-slate-900 text-white flex flex-col flex-shrink-0 shadow-xl h-screen sticky top-0">
+    <!-- Brand / Logo -->
+    <div class="p-5 flex items-center space-x-3 border-b border-slate-800">
+        <span class="text-xl font-black tracking-wider uppercase text-indigo-500">SIREMO</span>
+    </div>
+
+    <!-- Informasi Profil Petugas (Dinamis) -->
+    <div class="p-5 border-b border-slate-800 bg-slate-950/40 flex items-center space-x-3">
+        <div class="w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center font-bold text-white shadow shadow-indigo-500/50 flex-shrink-0">
+            <?= htmlspecialchars($initials); ?>
+        </div>
+        <div class="overflow-hidden">
+            <p class="text-sm font-bold truncate" title="<?= htmlspecialchars($userName); ?>">
+                <?= htmlspecialchars($userName); ?>
+            </p>
+            <p class="text-[11px] text-indigo-300 font-medium truncate">Staff Lapangan</p>
+        </div>
+    </div>
+
+    <!-- Link Menu Navigasi -->
+    <nav class="flex-1 p-4 space-y-5 overflow-y-auto">
+        <!-- DASHBOARD -->
+        <div>
+            <a href="index.php?page=home_lapangan&action=home"
+               class="flex items-center space-x-3 py-2.5 px-4 rounded-xl text-sm font-bold transition <?= $action === 'home' ? 'bg-white/10 text-white border-l-4 border-indigo-500 shadow-inner' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' ?>">
+                <span>Dashboard</span>
+            </a>
+        </div>
+
+        <!-- MENU TRANSAKSI OPERASIONAL LAPANGAN -->
+        <div>
+            <p class="px-4 text-[10px] font-bold uppercase text-slate-500 mb-2 tracking-widest">Transaksi Unit</p>
+            <div class="space-y-1">
+                <!-- Menu Serah Mobil (Handover) -->
+                <a href="index.php?page=home_lapangan&action=serah_mobil" 
+                   class="flex items-center py-2 px-4 rounded-lg text-xs font-bold transition <?= $action === 'serah_mobil' ? 'bg-white/10 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' ?>">
+                    Serah Mobil (Handover)
+                </a>
+                
+                <!-- Menu Data Di Sewa (Return) -->
+                <a href="index.php?page=home_lapangan&action=di_sewa" 
+                   class="flex items-center py-2 px-4 rounded-lg text-xs font-bold transition <?= $action === 'di_sewa' ? 'bg-white/10 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' ?>">
+                    Data Di Sewa
+                </a>
+                
+                <!-- Menu Cek Mobil (Visual Damage Check) -->
+                <a href="index.php?page=home_lapangan&action=cek_mobil" 
+                   class="flex items-center py-2 px-4 rounded-lg text-xs font-bold transition <?= $action === 'cek_mobil' ? 'bg-white/10 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' ?>">
+                    Cek Mobil
+                </a>
+            </div>
+        </div>
+
+        <!-- REFERENSI DATA MASTER -->
+        <div>
+            <p class="px-4 text-[10px] font-bold uppercase text-slate-500 mb-2 tracking-widest">Referensi</p>
+            <div class="space-y-1">
+                <a href="index.php?page=home_lapangan&action=data_kerusakan" 
+                   class="flex items-center py-2 px-4 rounded-lg text-xs font-bold transition <?= $action === 'data_kerusakan' ? 'bg-white/10 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' ?>">
+                    Data Mobil Rusak
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Tombol Keluar Sistem -->
+    <div class="p-4 border-t border-slate-800 flex-shrink-0">
+        <a href="index.php?page=logout" class="flex items-center justify-center space-x-2 w-full py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-bold transition shadow-md hover:shadow-lg hover:shadow-red-900/30">
+            <span>Keluar Sistem</span>
+        </a>
+    </div>
+</aside>

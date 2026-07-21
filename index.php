@@ -116,7 +116,6 @@ switch ($page) {
          } elseif ($action === 'proses_selesai_perbaikan') {
             $controller->proses_selesai_perbaikan();
         } elseif ($action === 'proses_upgrade_loyalitas') {
-            // PERBAIKAN: Menjalankan logika upgrade melalui fungsi controller
             $controller->proses_upgrade_loyalitas();
         } else {
             include 'views/user/dashboard/staffadmin.php';
@@ -128,14 +127,16 @@ switch ($page) {
         $karyawanController = new KaryawanController();
         $lapanganAction = $_GET['action'] ?? '';
 
-        // PERBAIKAN: Route proses form handover/return/cek kondisi ke KaryawanController
-        // agar data benar-benar tersimpan ke database sebelum redirect.
         if ($lapanganAction === 'proses_handover') {
             $karyawanController->proses_handover();
         } elseif ($lapanganAction === 'proses_return') {
             $karyawanController->proses_return();
-        } elseif ($lapanganAction === 'proses_cek_kondisi') {
-            $karyawanController->proses_cek_kondisi();
+        } 
+        // BARU & DISESUAIKAN: Menghubungkan Form Edit & Proses Simpan Kondisi Mobil
+        elseif ($lapanganAction === 'edit_kondisi') {
+            $karyawanController->edit_kondisi();
+        } elseif ($lapanganAction === 'proses_edit_kondisi') {
+            $karyawanController->proses_edit_kondisi();
         } else {
             include 'views/user/dashboard/stafflapangan.php';
         }

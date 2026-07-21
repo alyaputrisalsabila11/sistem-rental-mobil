@@ -47,7 +47,7 @@
                     <a href="index.php?page=manager_dashboard&action=data_loyalitas" class="flex items-center py-2 px-4 rounded-lg text-xs font-semibold transition <?= $action === 'data_loyalitas' ? 'bg-slate-800/80 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white hover:bg-slate-800' ?>">Data Loyalitas</a>
                     <a href="index.php?page=manager_dashboard&action=data_voucher" class="flex items-center py-2 px-4 rounded-lg text-xs font-semibold transition <?= $action === 'data_voucher' ? 'bg-slate-800/80 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white hover:bg-slate-800' ?>">Data Voucher</a>
                     <a href="index.php?page=manager_dashboard&action=data_fasilitas" class="flex items-center py-2 px-4 rounded-lg text-xs font-semibold transition <?= $action === 'data_fasilitas' ? 'bg-slate-800/80 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white hover:bg-slate-800' ?>">Data Fasilitas</a>
-                    <a href="index.php?page=manager_dashboard&action=data_kerusakan" class="flex items-center py-2 px-4 rounded-lg text-xs font-semibold transition <?= $action === 'data_kerusakan' ? 'bg-slate-800/80 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white hover:bg-slate-800' ?>">Data Jenis Kerusakan</a>
+                    <a href="index.php?page=manager_dashboard&action=data_kerusakan" class="flex items-center py-2 px-4 rounded-lg text-xs font-semibold transition <?= $action === 'data_kerusakan' ? 'bg-slate-800/80 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white hover:bg-slate-800' ?>">Data Kondisi Mobil</a>
                 </div>
             </div>
         </nav>

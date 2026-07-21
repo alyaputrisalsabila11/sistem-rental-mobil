@@ -12,7 +12,6 @@ class KaryawanModel {
     // Fungsi untuk membuat / mendaftarkan akun karyawan baru oleh Manager
     public function createKaryawan($data) {
         try {
-            // DISESUAIKAN: Menambahkan kolom alamat, no_ktp, status_supir, dan mengubah updated_at menjadi update_at
             $sql = "INSERT INTO karyawan (nama_karyawan, email, no_telp, password, role, status_karyawan, id_lokasi, alamat, no_ktp, status_supir, created_at, update_at) 
                     VALUES (:nama_karyawan, :email, :no_telp, :password, :role, :status_karyawan, :id_lokasi, :alamat, :no_ktp, :status_supir, NOW(), NOW())";
             
@@ -39,7 +38,6 @@ class KaryawanModel {
     
     public function getAllKaryawan() {
         try {
-            // Tetap mempertahankan join ke tabel lokasi, namun mengambil field baru jika dibutuhkan di view
             $sql = "SELECT k.id_karyawan, k.nama_karyawan, k.email, k.no_telp, k.role, k.status_karyawan, k.alamat, k.no_ktp, k.status_supir, l.nama_lokasi 
                     FROM karyawan k
                     LEFT JOIN lokasi l ON k.id_lokasi = l.id_lokasi
@@ -53,10 +51,8 @@ class KaryawanModel {
         }
     }
 
-    // Tambahkan/sesuaikan metode getByUsername di KaryawanModel.php Anda:
     public function getByUsername($username) {
         try {
-            // PERBAIKAN: Memastikan kolom id_lokasi ikut terambil dari query select
             $sql = "SELECT id_karyawan, nama_karyawan, email, password, role, id_lokasi 
                     FROM karyawan 
                     WHERE email = ? LIMIT 1";
@@ -71,7 +67,6 @@ class KaryawanModel {
         }
     }
 
-    // Mengambil 1 data karyawan spesifik berdasarkan ID untuk form edit
     public function getKaryawanById($id) {
         try {
             $sql = "SELECT * FROM karyawan WHERE id_karyawan = ?";
@@ -84,10 +79,8 @@ class KaryawanModel {
         }
     }
 
-    // Menyimpan perubahan data karyawan
     public function updateKaryawan($id, $data) {
         try {
-            // DISESUAIKAN: Mengubah nama kolom timestamp ke update_at dan menyertakan data alamat, no_ktp, status_supir
             if (!empty($data['password'])) {
                 $sql = "UPDATE karyawan SET nama_karyawan = :nama_karyawan, email = :email, no_telp = :no_telp, password = :password, role = :role, status_karyawan = :status_karyawan, id_lokasi = :id_lokasi, alamat = :alamat, no_ktp = :no_ktp, status_supir = :status_supir, update_at = NOW() WHERE id_karyawan = :id_karyawan";
             } else {
@@ -120,7 +113,6 @@ class KaryawanModel {
         }
     }
 
-    // Menghapus data karyawan
     public function deleteKaryawan($id) {
         try {
             $sql = "DELETE FROM karyawan WHERE id_karyawan = ?";
@@ -132,12 +124,8 @@ class KaryawanModel {
         }
     }
 
-    // FUNGSI BARU: Mengambil jadwal tugas (Sopir & Pengecekan) untuk karyawan tertentu
     public function getTasksByKaryawan($id_karyawan) {
         try {
-            // Kita ambil data dari penyewaan yang statusnya Confirmed (perlu diantar/dicek)
-            // Catatan: Jika di tabel penyewaan belum ada id_karyawan, 
-            // kita asumsikan karyawan melihat semua mobil di lokasinya yang perlu dicek.
             $sql = "SELECT s.*, m.merk_mobil, m.plat_nomor, p.nama_pelanggan, l.nama_lokasi
                     FROM penyewaan s
                     JOIN mobil m ON s.id_mobil = m.id_mobil
@@ -156,10 +144,8 @@ class KaryawanModel {
         }
     }
 
-    // FUNGSI BARU: Menghitung jumlah jadwal pengecekan/tugas sopir
     public function getTugasCount() {
         try {
-            // Kita hitung penyewaan yang statusnya Confirmed (perlu serah terima) atau In-Use (perlu pengembalian)
             $sql = "SELECT COUNT(*) as total FROM penyewaan WHERE status_penyewaan IN ('Confirmed', 'In-Use')";
             $stmt = $this->db->prepare($sql);
             $stmt->execute();
@@ -168,6 +154,19 @@ class KaryawanModel {
         } catch (Exception $e) {
             error_log("Error di getTugasCount: " . $e->getMessage());
             return 0;
+        }
+    }
+
+    // FIX BUGS: Menghapus query getkondisi() lama yang salah, diganti dengan query spesifik tabel kondisi_mobil
+    public function getKondisiMobilById($id_kondisi) {
+        try {
+            $sql = "SELECT * FROM kondisi_mobil WHERE id_kondisi = ?";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([$id_kondisi]);
+            return $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (Exception $e) {
+            error_log("Error saat getKondisiMobilById: " . $e->getMessage());
+            return false;
         }
     }
 }

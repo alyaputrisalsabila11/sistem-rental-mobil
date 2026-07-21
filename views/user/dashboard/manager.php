@@ -791,6 +791,156 @@ $action = $_GET['action'] ?? 'home';
                         </table>
                     </div>
                 </div>
+
+            <?php elseif ($action === 'data_kerusakan'): ?>
+                <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+                    <table class="w-full text-left text-sm">
+                    <thead class="bg-gray-50 border-b text-gray-700">
+                        <tr>
+                            <th class="px-6 py-4">ID</th>
+                            <th class="px-6 py-4">Detail Kerusakan</th>
+                            <th class="px-6 py-4">Tingkat</th>
+                            <th class="px-6 py-4">Estimasi Biaya</th>
+                            <th class="px-6 py-4">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        <?php
+                        try {
+                            // Mengambil data dari tabel kondisi_mobil sesuai skema database kamu
+                            $stmtKrs = $db->query("SELECT * FROM kondisi_mobil ORDER BY id_kondisi ASC");
+                            while($krs = $stmtKrs->fetch(PDO::FETCH_ASSOC)):
+
+                                $badgeColor = 'bg-green-100 text-green-800';
+                                if ($krs['tingkat_kerusakan'] === 'Ringan') {
+                                    $badgeColor = 'bg-yellow-100 text-yellow-800';
+                                } elseif ($krs['tingkat_kerusakan'] === 'Sedang') {
+                                    $badgeColor = 'bg-orange-100 text-orange-800';
+                                } elseif ($krs['tingkat_kerusakan'] === 'Parah') {
+                                    $badgeColor = 'bg-red-100 text-red-800';
+                                }
+                            ?>
+                            <tr class="hover:bg-gray-50 transition">
+                                <td class="px-6 py-4 text-gray-600 font-medium"><?= $krs['id_kondisi']; ?></td>
+                                <td class="px-6 py-4 font-semibold text-gray-800 max-w-xs truncate">
+                                    <?= htmlspecialchars($krs['deskripsi_kerusakan']); ?>
+                                </td>
+                                
+                                <td class="px-6 py-4 text-xs">
+                                    <span class="px-2.5 py-1 rounded-full font-bold <?= $badgeColor; ?>">
+                                        <?= htmlspecialchars($krs['tingkat_kerusakan']); ?>
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 font-bold text-red-600">
+                                    Rp <?= number_format($krs['estimasi_biaya'] ?? 0); ?>
+                                </td>
+                                <td class="px-4 py-4">
+                                    <div class="flex space-x-2">
+                                        <a href="index.php?page=manager_dashboard&action=detail&id=<?= $krs['id_kondisi']; ?>" 
+                                        class="inline-block px-3 py-1 bg-blue-100 text-blue-800 font-semibold text-xs rounded-full hover:bg-blue-200 transition">
+                                            Detail
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endwhile;
+                        } catch (PDOException $e) {
+                            echo "<tr><td colspan='5' class='px-6 py-10 text-center text-gray-400 italic'>Gagal mengambil data: " . htmlspecialchars($e->getMessage()) . "</td></tr>";
+                        } ?>
+                    </tbody>
+                </table>
+            </div>
+
+            <?php elseif($action === 'detail'): ?>
+                <div class="w-full max-w-3xl mx-auto bg-white p-6 rounded-2xl border shadow-sm space-y-4">
+                    <h3 class="font-bold text-gray-800 text-sm border-b pb-2">Formulir Penyelesaian & Estimasi Biaya Perbaikan</h3>
+                    
+                    <form action="" method="POST" class="space-y-4">
+                        <!-- ID Kondisi Hidden -->
+                        <input type="hidden" name="id_kondisi" value="<?= htmlspecialchars($evData['id_kondisi'] ?? 0); ?>">
+                        
+                        <!-- SECTION 1: DATA BERSIFAT READ-ONLY (DIKUNCI) -->
+                        <div class="bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-100">
+                            <span class="text-[10px] font-bold text-indigo-600 uppercase tracking-wider block">Informasi Kerusakan Lapangan (Read-Only)</span>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <!-- Tingkat Kerusakan -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">Tingkat Kerusakan</label>
+                                    <select disabled class="w-full border p-2.5 rounded-xl text-xs bg-gray-100 text-gray-500 font-medium cursor-not-allowed">
+                                        <option value="Ringan" <?= ($evData['tingkat_kerusakan'] ?? '') === 'Ringan' ? 'selected' : ''; ?>>Ringan</option>
+                                        <option value="Sedang" <?= ($evData['tingkat_kerusakan'] ?? '') === 'Sedang' ? 'selected' : ''; ?>>Sedang</option>
+                                        <option value="Parah" <?= ($evData['tingkat_kerusakan'] ?? '') === 'Parah' ? 'selected' : ''; ?>>Parah</option>
+                                    </select>
+                                </div>
+
+                                <!-- Tanggal Dilaporkan -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">Tanggal Dilaporkan</label>
+                                    <input type="text" readonly class="w-full border p-2.5 rounded-xl text-xs bg-gray-100 text-gray-500 cursor-not-allowed font-medium" 
+                                        value="<?= htmlspecialchars($evData['tgl_dilaporkan'] ?? '-'); ?>">
+                                </div>
+                            </div>
+
+                            <!-- Deskripsi Kerusakan -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Deskripsi Kerusakan</label>
+                                <textarea readonly class="w-full border p-3 rounded-xl text-xs bg-gray-100 text-gray-500 cursor-not-allowed" rows="3"><?= htmlspecialchars($evData['deskripsi_kerusakan'] ?? ''); ?></textarea>
+                            </div>
+
+                            <!-- Foto Kerusakan -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Bukti Gambar Kerusakan</label>
+                                <div class="border rounded-xl p-2 bg-white flex justify-center items-center h-48 overflow-hidden">
+                                    <?php if (!empty($evData['gambar_kerusakan'])): ?>
+                                        <img src="data:image/jpeg;base64,<?= base64_encode($evData['gambar_kerusakan']); ?>" class="max-h-full object-contain rounded-lg" alt="Foto Kerusakan">
+                                    <?php else: ?>
+                                        <span class="text-xs italic text-gray-400">Tidak ada gambar kerusakan yang diunggah.</span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- SECTION 2: ESTIMASI & PENYELESAIAN (DIJADIKAN READ-ONLY JUGA) -->
+                        <div class="p-4 rounded-xl space-y-3 border border-gray-100 bg-gray-50">
+                            <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Estimasi & Status Perbaikan (Read-Only)</span>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <!-- Estimasi Biaya -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">Estimasi Biaya (Rp)</label>
+                                    <input type="text" readonly class="w-full border p-2.5 rounded-xl text-xs bg-gray-100 text-gray-500 cursor-not-allowed font-medium" 
+                                        value="<?= htmlspecialchars($evData['estimasi_biaya'] ?? '0'); ?>">
+                                </div>
+
+                                <!-- Status Kondisi/Perbaikan -->
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-1">Status Perbaikan</label>
+                                    <select disabled class="w-full border p-2.5 rounded-xl text-xs bg-gray-100 text-gray-500 font-medium cursor-not-allowed">
+                                        <option value="Pending" <?= ($evData['status_kondisi'] ?? '') === 'Pending' ? 'selected' : ''; ?>>Pending</option>
+                                        <option value="Proses" <?= ($evData['status_kondisi'] ?? '') === 'Proses' ? 'selected' : ''; ?>>Dalam Perbaikan</option>
+                                        <option value="Selesai" <?= ($evData['status_kondisi'] ?? '') === 'Selesai' ? 'selected' : ''; ?>>Selesai</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Catatan Perbaikan -->
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Catatan / Solusi Perbaikan</label>
+                                <textarea readonly class="w-full border p-3 rounded-xl text-xs bg-gray-100 text-gray-500 cursor-not-allowed" rows="3"><?= htmlspecialchars($evData['catatan_perbaikan'] ?? '-'); ?></textarea>
+                            </div>
+                        </div>
+
+                        <!-- BUTTON AKSI: Hanya tombol kembali -->
+                        <div class="flex justify-end pt-2">
+                            <a href="index.php?page=manager_dashboard" class="px-4 py-2 bg-gray-500 text-white text-xs font-semibold rounded-xl hover:bg-gray-600 transition-colors">
+                                Kembali ke Dashboard
+                            </a>
+                        </div>
+                    </form>
+                </div>
+                
+
             <?php endif; ?>
 
         </main>
