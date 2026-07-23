@@ -50,6 +50,17 @@
                     <a href="index.php?page=manager_dashboard&action=data_kerusakan" class="flex items-center py-2 px-4 rounded-lg text-xs font-semibold transition <?= $action === 'data_kerusakan' ? 'bg-slate-800/80 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white hover:bg-slate-800' ?>">Data Kondisi Mobil</a>
                 </div>
             </div>
+
+            <!-- LAPORAN -->
+            <div>
+                <p class="px-4 text-[10px] font-bold uppercase text-slate-500 tracking-wider mb-2">Laporan</p>
+                <div class="space-y-1">
+                    <a href="index.php?page=manager_dashboard&action=laporan_pendapatan" class="flex items-center py-2 px-4 rounded-lg text-xs font-semibold transition <?= $action === 'laporan_pendapatan' ? 'bg-slate-800/80 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white hover:bg-slate-800' ?>">Laporan Pendapatan Utama</a>
+                    <a href="index.php?page=manager_dashboard&action=laporan_pelanggan" class="flex items-center py-2 px-4 rounded-lg text-xs font-semibold transition <?= $action === 'laporan_pelanggan' ? 'bg-slate-800/80 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white hover:bg-slate-800' ?>">Laporan Pelanggan Teraktif</a>
+                    <a href="index.php?page=manager_dashboard&action=laporan_kerusakan" class="flex items-center py-2 px-4 rounded-lg text-xs font-semibold transition <?= $action === 'laporan_kerusakan' ? 'bg-slate-800/80 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white hover:bg-slate-800' ?>">Laporan Riwayat Kerusakan</a>
+                    <a href="index.php?page=manager_dashboard&action=laporan_ketersediaan" class="flex items-center py-2 px-4 rounded-lg text-xs font-semibold transition <?= $action === 'laporan_ketersediaan' ? 'bg-slate-800/80 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:text-white hover:bg-slate-800' ?>">Laporan Ketersediaan Mobil</a>
+                </div>
+            </div>
         </nav>
 
         <div class="p-4 border-t border-slate-800 flex-shrink-0">

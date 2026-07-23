@@ -8,6 +8,143 @@ $staff_name = $_SESSION['user_name'] ?? 'Staff Lapangan';
 $id_lokasi_cabang = $_SESSION['id_lokasi'] ?? null; 
 $action = $_GET['action'] ?? 'home';
 
+// --- PROSES ACTION HANDLER (POST & GET) ---
+if ($action === 'proses_cek_kondisi' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id_pengembalian = filter_var($_POST['id_pengembalian'] ?? 0, FILTER_VALIDATE_INT);
+    $id_mobil = filter_var($_POST['id_mobil'] ?? 0, FILTER_VALIDATE_INT);
+    $tingkat_kerusakan = $_POST['tingkat_kerusakan'] ?? 'Ringan';
+    $tgl_cek = $_POST['tgl_cek'] ?? date('Y-m-d');
+    $estimasi_biaya = $_POST['estimasi_biaya'] ?? 0;
+    $deskripsi_kerusakan = $_POST['deskripsi_kerusakan'] ?? '';
+
+    // Upload file gambar bukti kerusakan
+    $gambar_data = null;
+    if (isset($_FILES['gambar_kerusakan']) && $_FILES['gambar_kerusakan']['error'] === UPLOAD_ERR_OK) {
+        $gambar_data = file_get_contents($_FILES['gambar_kerusakan']['tmp_name']);
+    }
+
+    // Ambil batas max_allowed_packet dari MySQL untuk mencegah crash "MySQL server has gone away"
+    $max_packet_size = 1048576; // Default fallback 1MB
+    try {
+        $stmtPacket = $db->query("SELECT @@global.max_allowed_packet");
+        if ($stmtPacket) {
+            $max_packet_size = (int)$stmtPacket->fetchColumn();
+        }
+    } catch (Exception $ex) {
+        // Abaikan jika gagal membaca variabel global
+    }
+
+    // Validasi ukuran gambar agar tidak melebihi kapasitas paket MySQL
+    if ($gambar_data !== null && strlen($gambar_data) >= ($max_packet_size - 10240)) {
+        $_SESSION['error'] = "Gagal: Ukuran gambar bukti kerusakan terlalu besar (" . number_format(strlen($gambar_data) / 1048576, 2) . " MB) untuk konfigurasi database Anda. Silakan kompres gambar atau upload gambar di bawah " . number_format($max_packet_size / 1048576, 1) . " MB.";
+        header("Location: index.php?page=home_lapangan&action=form_cek&id=" . $id_pengembalian);
+        exit;
+    }
+
+    try {
+        $db->beginTransaction();
+
+        // 1. Simpan laporan ke tabel kondisi_mobil
+        $stmtInsert = $db->prepare("
+            INSERT INTO kondisi_mobil (id_mobil, tgl_dilaporkan, deskripsi_kerusakan, tingkat_kerusakan, gambar_kerusakan, estimasi_biaya, tgl_selesai)
+            VALUES (?, ?, ?, ?, ?, ?, NULL)
+        ");
+        $stmtInsert->execute([
+            $id_mobil,
+            $tgl_cek . ' ' . date('H:i:s'),
+            $deskripsi_kerusakan,
+            $tingkat_kerusakan,
+            $gambar_data,
+            $estimasi_biaya
+        ]);
+
+        // 2. Ubah status mobil di tabel mobil menjadi Maintenance
+        $stmtUpdateMobil = $db->prepare("UPDATE mobil SET status_mobil = 'Maintenance' WHERE id_mobil = ?");
+        $stmtUpdateMobil->execute([$id_mobil]);
+
+        // 3. Hapus data antrean dari tabel pengembalian agar tidak muncul lagi di antrean cek
+        $stmtDelPengembalian = $db->prepare("DELETE FROM pengembalian WHERE id_pengembalian = ?");
+        $stmtDelPengembalian->execute([$id_pengembalian]);
+
+        $db->commit();
+        $_SESSION['success'] = "Laporan kerusakan berhasil disimpan. Status armada diubah menjadi Maintenance.";
+    } catch (Exception $e) {
+        if ($db->inTransaction()) {
+            try {
+                $db->rollBack();
+            } catch (Exception $rollbackException) {
+                // Abaikan jika rollback gagal karena koneksi database terputus
+            }
+        }
+        $_SESSION['error'] = "Gagal memproses data kondisi: " . $e->getMessage();
+    }
+
+    header("Location: index.php?page=home_lapangan&action=data_kerusakan");
+    exit;
+}
+
+if ($action === 'proses_edit_kondisi' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id_kondisi = filter_var($_POST['id_kondisi'] ?? 0, FILTER_VALIDATE_INT);
+    $estimasi_biaya = $_POST['estimasi_biaya'] ?? 0;
+    $tgl_selesai = !empty($_POST['tgl_selesai']) ? date('Y-m-d H:i:s', strtotime($_POST['tgl_selesai'])) : null;
+
+    try {
+        $stmtUpdateKondisi = $db->prepare("
+            UPDATE kondisi_mobil 
+            SET estimasi_biaya = ?, tgl_selesai = ? 
+            WHERE id_kondisi = ?
+        ");
+        $stmtUpdateKondisi->execute([$estimasi_biaya, $tgl_selesai, $id_kondisi]);
+        $_SESSION['success'] = "Estimasi biaya perbaikan dan tanggal selesai berhasil diperbarui.";
+    } catch (Exception $e) {
+        $_SESSION['error'] = "Gagal memperbarui data: " . $e->getMessage();
+    }
+
+    header("Location: index.php?page=home_lapangan&action=data_kerusakan");
+    exit;
+}
+
+// Intersepsi logika Selesai melalui aksi terdaftar agar tidak melanggar aturan rute index.php
+if ($action === 'data_kerusakan' && isset($_GET['selesai_id'])) {
+    $id_kondisi = filter_var($_GET['selesai_id'] ?? 0, FILTER_VALIDATE_INT);
+    try {
+        $db->beginTransaction();
+
+        // 1. Dapatkan id_mobil terlebih dahulu sebelum data kondisi dihapus
+        $stmtGetMobil = $db->prepare("SELECT id_mobil FROM kondisi_mobil WHERE id_kondisi = ?");
+        $stmtGetMobil->execute([$id_kondisi]);
+        $id_mobil = $stmtGetMobil->fetchColumn();
+
+        if ($id_mobil) {
+            // 2. Kembalikan status mobil di tabel mobil menjadi Tersedia (masuk kembali ke gallery)
+            $stmtUpdateMobil = $db->prepare("UPDATE mobil SET status_mobil = 'Tersedia' WHERE id_mobil = ?");
+            $stmtUpdateMobil->execute([$id_mobil]);
+
+            // 3. Hapus data dari tabel kondisi_mobil
+            $stmtDeleteKondisi = $db->prepare("DELETE FROM kondisi_mobil WHERE id_kondisi = ?");
+            $stmtDeleteKondisi->execute([$id_kondisi]);
+
+            $db->commit();
+            $_SESSION['success'] = "Perawatan mobil selesai. Status armada kembali Tersedia.";
+        } else {
+            throw new Exception("Data kondisi mobil tidak ditemukan.");
+        }
+    } catch (Exception $e) {
+        if ($db->inTransaction()) {
+            try {
+                $db->rollBack();
+            } catch (Exception $rollbackException) {
+                // Abaikan jika rollback gagal karena koneksi database terputus
+            }
+        }
+        $_SESSION['error'] = "Gagal memproses penyelesaian perawatan: " . $e->getMessage();
+    }
+
+    header("Location: index.php?page=home_lapangan&action=data_kerusakan");
+    exit;
+}
+// --- END PROSES ACTION HANDLER ---
+
 // Query ringkasan status armada - Menggunakan Prepared Statement demi keamanan ke depan
 $ready_count = 0; $maintenance_count = 0; $disewa_count = 0;
 try {
@@ -66,34 +203,285 @@ try {
         <?php endif; ?>
 
         <!-- ==================== HOME LAPANGAN ==================== -->
-        <?php if ($action === 'home'): ?>
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
-                <div class="bg-indigo-600 text-white p-5 rounded-2xl shadow-lg flex flex-col justify-between">
-                    <div>
-                        <p class="text-[10px] font-bold text-indigo-200 uppercase italic">Tugas Sopir Prioritas</p>
-                        <h2 class="text-xl font-black mt-2">Siaga Driver Cabang</h2>
-                        <p class="text-xs text-indigo-100 mt-1">Status: Antar kunci & serah unit ke alamat pelanggan.</p>
+        <?php if ($action === 'home'): 
+            // --- QUERY METRIK DASHBOARD LAPANGAN ---
+            // 1. Antrean Handover
+            $stmtCountH = $db->prepare("
+                SELECT COUNT(*) 
+                FROM penyewaan p 
+                LEFT JOIN penyerahan pen ON p.id_penyewaan = pen.id_penyewaan
+                WHERE p.status_penyewaan IN ('Confirmed', 'Pending') AND pen.id_penyerahan IS NULL
+            ");
+            $stmtCountH->execute();
+            $count_handover = $stmtCountH->fetchColumn() ?: 0;
+
+            // 2. Antrean Return
+            $stmtCountR = $db->prepare("
+                SELECT COUNT(*) 
+                FROM penyerahan pen
+                WHERE pen.status_sewa = 'ongoing'
+            ");
+            $stmtCountR->execute();
+            $count_return = $stmtCountR->fetchColumn() ?: 0;
+
+            // 3. Antrean Cek Kondisi
+            $stmtCountC = $db->prepare("
+                SELECT COUNT(*) 
+                FROM pengembalian pg
+                JOIN penyerahan pen ON pg.id_penyerahan = pen.id_penyerahan
+                JOIN penyewaan pny ON pen.id_penyewaan = pny.id_penyewaan
+            ");
+            $stmtCountC->execute();
+            $count_cek = $stmtCountC->fetchColumn() ?: 0;
+
+            // 4. Mobil Diperbaiki (kondisi_mobil)
+            $stmtCountKM = $db->prepare("SELECT COUNT(*) FROM kondisi_mobil");
+            $stmtCountKM->execute();
+            $count_kondisi = $stmtCountKM->fetchColumn() ?: 0;
+
+            // 5. Riwayat Antrean Handover Terbaru (Maksimal 3)
+            $stmtRecentH = $db->prepare("
+                SELECT p.*, m.merk_mobil, m.plat_nomor, pl.nama_lengkap 
+                FROM penyewaan p 
+                JOIN mobil m ON p.id_mobil = m.id_mobil 
+                JOIN pelanggan pl ON p.id_pelanggan = pl.id_pelanggan
+                LEFT JOIN penyerahan pen ON p.id_penyewaan = pen.id_penyewaan
+                WHERE p.status_penyewaan IN ('Confirmed', 'Pending') AND pen.id_penyerahan IS NULL
+                ORDER BY p.id_penyewaan DESC
+                LIMIT 3
+            ");
+            $stmtRecentH->execute();
+            $recent_handovers = $stmtRecentH->fetchAll(PDO::FETCH_ASSOC);
+
+            // 6. Riwayat Antrean Cek Terbaru (Maksimal 3)
+            $stmtRecentC = $db->prepare("
+                SELECT pg.id_pengembalian, m.merk_mobil, m.plat_nomor, pl.nama_lengkap 
+                FROM pengembalian pg
+                JOIN penyerahan pen ON pg.id_penyerahan = pen.id_penyerahan
+                JOIN penyewaan pny ON pen.id_penyewaan = pny.id_penyewaan
+                JOIN mobil m ON pny.id_mobil = m.id_mobil
+                JOIN pelanggan pl ON pny.id_pelanggan = pl.id_pelanggan
+                ORDER BY pg.id_pengembalian DESC
+                LIMIT 3
+            ");
+            $stmtRecentC->execute();
+            $recent_checks = $stmtRecentC->fetchAll(PDO::FETCH_ASSOC);
+        ?>
+            <!-- TATA LETAK CARD DASHBOARD UTAMA -->
+            <div class="mb-6">
+                <div class="mb-5">
+                    <h2 class="text-lg font-black text-gray-800">
+                        Ringkasan Tugas & Operasional Lapangan
+                    </h2>
+                    <p class="text-xs text-gray-400 mt-1">
+                        Informasi lengkap antrean tugas fisik armada di cabang Anda
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <!-- ARMADA READY -->
+                    <div class="bg-white p-5 rounded-2xl border shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                Armada Ready
+                            </p>
+                            <p class="text-3xl font-black text-green-600 mt-1">
+                                <?= $ready_count; ?>
+                            </p>
+                            <p class="text-[10px] text-gray-400 mt-1">
+                                Unit siap disewa
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center text-green-600">
+                            <i class="fa-solid fa-circle-check text-lg"></i>
+                        </div>
                     </div>
-                </div>
 
-                <div class="bg-white p-5 rounded-2xl border flex flex-col justify-center shadow-sm">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase">Armada Ready</p>
-                    <p class="text-2xl font-black text-green-600 mt-1"><?= $ready_count; ?></p>
-                </div>
+                    <!-- ARMADA MAINTENANCE -->
+                    <div class="bg-white p-5 rounded-2xl border shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                Armada Maintenance
+                            </p>
+                            <p class="text-3xl font-black text-orange-500 mt-1">
+                                <?= $maintenance_count; ?>
+                            </p>
+                            <p class="text-[10px] text-gray-400 mt-1">
+                                Sedang diperbaiki
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500">
+                            <i class="fa-solid fa-screwdriver-wrench text-lg"></i>
+                        </div>
+                    </div>
 
-                <div class="bg-white p-5 rounded-2xl border flex flex-col justify-center shadow-sm">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase">Maintenance</p>
-                    <p class="text-2xl font-black text-orange-500 mt-1"><?= $maintenance_count; ?></p>
-                </div>
+                    <!-- ARMADA SEDANG DISEWA -->
+                    <div class="bg-white p-5 rounded-2xl border shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                Sedang Disewa
+                            </p>
+                            <p class="text-3xl font-black text-indigo-600 mt-1">
+                                <?= $disewa_count; ?>
+                            </p>
+                            <p class="text-[10px] text-gray-400 mt-1">
+                                Unit aktif di jalanan
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+                            <i class="fa-solid fa-car-side text-lg"></i>
+                        </div>
+                    </div>
 
-                <div class="bg-white p-5 rounded-2xl border flex flex-col justify-center shadow-sm">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase">Sedang Disewa</p>
-                    <p class="text-2xl font-black text-indigo-600 mt-1"><?= $disewa_count; ?></p>
+                    <!-- TUGAS HANDOVER -->
+                    <div class="bg-white p-5 rounded-2xl border shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                Tugas Handover
+                            </p>
+                            <p class="text-3xl font-black text-blue-600 mt-1">
+                                <?= $count_handover; ?>
+                            </p>
+                            <p class="text-[10px] text-gray-400 mt-1">
+                                Menunggu serah unit
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600">
+                            <i class="fa-solid fa-key text-lg"></i>
+                        </div>
+                    </div>
+
+                    <!-- TUGAS PENGEMBALIAN -->
+                    <div class="bg-white p-5 rounded-2xl border shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                Tugas Pengembalian
+                            </p>
+                            <p class="text-3xl font-black text-amber-600 mt-1">
+                                <?= $count_return; ?>
+                            </p>
+                            <p class="text-[10px] text-gray-400 mt-1">
+                                Unit ongoing aktif
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-600">
+                            <i class="fa-solid fa-arrow-rotate-left text-lg"></i>
+                        </div>
+                    </div>
+
+                    <!-- PENGECEKAN BODI -->
+                    <div class="bg-white p-5 rounded-2xl border shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                Pengecekan Bodi
+                            </p>
+                            <p class="text-3xl font-black text-red-500 mt-1">
+                                <?= $count_cek; ?>
+                            </p>
+                            <p class="text-[10px] text-gray-400 mt-1">
+                                Menunggu cek kondisi
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center text-red-500">
+                            <i class="fa-solid fa-magnifying-glass text-lg"></i>
+                        </div>
+                    </div>
+
+                    <!-- MOBIL DIPERBAIKI -->
+                    <div class="bg-white p-5 rounded-2xl border shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                                Mobil Diperbaiki
+                            </p>
+                            <p class="text-3xl font-black text-purple-600 mt-1">
+                                <?= $count_kondisi; ?>
+                            </p>
+                            <p class="text-[10px] text-gray-400 mt-1">
+                                Tercatat kondisi_mobil
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600">
+                            <i class="fa-solid fa-car-burst text-lg"></i>
+                        </div>
+                    </div>
+
+                    <!-- PETUGAS LAPANGAN -->
+                    <div class="bg-indigo-600 text-white p-5 rounded-2xl shadow-md flex items-center justify-between col-span-1 sm:col-span-1 lg:col-span-1">
+                        <div>
+                            <p class="text-[10px] font-bold text-indigo-200 uppercase tracking-wider">
+                                Petugas Lapangan
+                            </p>
+                            <p class="text-lg font-black mt-2 leading-none">
+                                <?= htmlspecialchars(substr($staff_name, 0, 12)); ?>
+                            </p>
+                            <p class="text-[9px] text-indigo-100 mt-2 uppercase tracking-widest font-semibold italic">
+                                Siaga Cabang #<?= htmlspecialchars($id_lokasi_cabang ?? '1'); ?>
+                            </p>
+                        </div>
+                        <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-white">
+                            <i class="fa-solid fa-user-shield text-base"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="p-5 bg-white border rounded-2xl">
-                <h3 class="font-bold text-gray-900 text-xs mb-2 uppercase">Panduan Handover & Return</h3>
+            <!-- AKTIVITAS TUGAS HARIAN LAPANGAN -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- TUGAS SERAH TERIMA (HANDOVER) -->
+                <div class="bg-white p-5 rounded-2xl border shadow-sm">
+                    <div class="flex items-center justify-between border-b pb-3 mb-4">
+                        <h3 class="font-bold text-gray-800 text-xs uppercase flex items-center gap-2">
+                            <i class="fa-solid fa-key text-indigo-600"></i>
+                            <span>Tugas Serah Terima (Handover)</span>
+                        </h3>
+                        <a href="index.php?page=home_lapangan&action=serah_mobil" class="text-[10px] font-black text-indigo-600 hover:underline uppercase">Detail &rarr;</a>
+                    </div>
+                    <div class="space-y-3">
+                        <?php if(!empty($recent_handovers)): foreach($recent_handovers as $rh): ?>
+                            <div class="p-3 bg-gray-50 rounded-xl border flex justify-between items-center text-xs">
+                                <div>
+                                    <span class="font-bold text-gray-800 block"><?= htmlspecialchars($rh['merk_mobil']); ?> (<?= htmlspecialchars($rh['plat_nomor']); ?>)</span>
+                                    <span class="text-gray-400 block text-[10px] mt-0.5">Penyewa: <strong><?= htmlspecialchars($rh['nama_lengkap']); ?></strong></span>
+                                </div>
+                                <a href="index.php?page=home_lapangan&action=detail_handover&id=<?= $rh['id_penyewaan']; ?>" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-lg text-[10px]">Lanjut</a>
+                            </div>
+                        <?php endforeach; else: ?>
+                            <p class="py-10 text-center text-gray-400 italic text-xs">Tidak ada tugas serah terima unit saat ini.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <!-- TUGAS PENGECEKAN BODI (CONDITION CHECKS) -->
+                <div class="bg-white p-5 rounded-2xl border shadow-sm">
+                    <div class="flex items-center justify-between border-b pb-3 mb-4">
+                        <h3 class="font-bold text-gray-800 text-xs uppercase flex items-center gap-2">
+                            <i class="fa-solid fa-magnifying-glass text-indigo-600"></i>
+                            <span>Tugas Pengecekan Bodi</span>
+                        </h3>
+                        <a href="index.php?page=home_lapangan&action=cek_mobil" class="text-[10px] font-black text-indigo-600 hover:underline uppercase">Detail &rarr;</a>
+                    </div>
+                    <div class="space-y-3">
+                        <?php if(!empty($recent_checks)): foreach($recent_checks as $rc): ?>
+                            <div class="p-3 bg-gray-50 rounded-xl border flex justify-between items-center text-xs">
+                                <div>
+                                    <span class="font-bold text-gray-800 block"><?= htmlspecialchars($rc['merk_mobil']); ?> (<?= htmlspecialchars($rc['plat_nomor']); ?>)</span>
+                                    <span class="text-gray-400 block text-[10px] mt-0.5">Penyewa: <strong><?= htmlspecialchars($rc['nama_lengkap']); ?></strong></span>
+                                </div>
+                                <a href="index.php?page=home_lapangan&action=form_cek&id=<?= $rc['id_pengembalian']; ?>" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded-lg text-[10px]">Cek Fisik</a>
+                            </div>
+                        <?php endforeach; else: ?>
+                            <p class="py-10 text-center text-gray-400 italic text-xs">Tidak ada antrean pengecekan fisik unit saat ini.</p>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANDUAN HARIAN LAPANGAN -->
+            <div class="p-5 bg-white border rounded-2xl shadow-sm">
+                <h3 class="font-bold text-gray-900 text-xs mb-2 uppercase flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info text-indigo-600"></i>
+                    <span>Panduan Handover & Return</span>
+                </h3>
                 <ul class="text-xs text-gray-500 space-y-1.5 list-inside list-decimal">
                     <li>Cocokkan nomor bodi & pelat nomor kendaraan sebelum kunci dilepas.</li>
                     <li>Ambil foto bersama pelanggan dan unit mobil di area depan kantor cabang.</li>
@@ -581,64 +969,117 @@ $stmtRet = $db->prepare("
         <!-- ==================== DATA JENIS KERUSAKAN REFERENSI ==================== -->
         <?php elseif ($action === 'data_kerusakan'): ?>
             <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-gray-50 border-b text-gray-700">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-gray-50 border-b text-gray-700 font-bold uppercase">
                         <tr>
                             <th class="px-6 py-4">ID</th>
+                            <th class="px-6 py-4">Armada Mobil</th>
                             <th class="px-6 py-4">Detail Kerusakan</th>
                             <th class="px-6 py-4">Tingkat</th>
+                            <th class="px-6 py-4">Tanggal Dilaporkan</th>
                             <th class="px-6 py-4">Estimasi Biaya</th>
-                            <th class="px-6 py-4 text-right">Aksi</th>
+                            <th class="px-6 py-4">Tanggal Selesai</th>
+                            <th class="px-6 py-4">Status Mobil</th>
+                            <th class="px-6 py-4 text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y">
                         <?php
                         try {
                             // Mengambil data dari tabel kondisi_mobil sesuai skema database kamu
-                            $stmtKrs = $db->query("SELECT * FROM kondisi_mobil ORDER BY id_kondisi ASC");
-                            while($krs = $stmtKrs->fetch(PDO::FETCH_ASSOC)):
+                            $stmtKrs = $db->query("
+                                SELECT k.*, m.merk_mobil, m.plat_nomor, m.status_mobil 
+                                FROM kondisi_mobil k
+                                JOIN mobil m ON k.id_mobil = m.id_mobil
+                                ORDER BY k.id_kondisi ASC
+                            ");
+                            $krsData = $stmtKrs->fetchAll(PDO::FETCH_ASSOC);
 
-                                $badgeColor = 'bg-green-100 text-green-800';
-                                if ($krs['tingkat_kerusakan'] === 'Ringan') {
-                                    $badgeColor = 'bg-yellow-100 text-yellow-800';
-                                } elseif ($krs['tingkat_kerusakan'] === 'Sedang') {
-                                    $badgeColor = 'bg-orange-100 text-orange-800';
-                                } elseif ($krs['tingkat_kerusakan'] === 'Parah') {
-                                    $badgeColor = 'bg-red-100 text-red-800';
-                                }
-                            ?>
-                            <tr class="hover:bg-gray-50 transition">
-                                <td class="px-6 py-4 text-gray-600 font-medium"><?= $krs['id_kondisi']; ?></td>
-                                <td class="px-6 py-4 font-semibold text-gray-800 max-w-xs truncate">
-                                    <?= htmlspecialchars($krs['deskripsi_kerusakan']); ?>
-                                </td>
-                                
-                                <td class="px-6 py-4 text-xs">
-                                    <span class="px-2.5 py-1 rounded-full font-bold <?= $badgeColor; ?>">
-                                        <?= htmlspecialchars($krs['tingkat_kerusakan']); ?>
-                                    </span>
-                                </td>
-                                
-                                <td class="px-6 py-4 text-right font-bold text-red-600">
-                                    Rp <?= number_format($krs['estimasi_biaya'] ?? 0); ?>
-                                </td>
+                            if (!empty($krsData)):
+                                foreach($krsData as $krs):
 
-                                <td class="px-4 py-4">
-                                    <div class="flex space-x-2">
-                                        <a href="index.php?page=home_lapangan&action=edit_kondisi&id=<?= $krs['id_kondisi']; ?>" class="text-blue-500 hover:text-blue-700">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                </td>
-                            </tr>
-                            <?php endwhile;
+                                    $badgeColor = 'bg-green-100 text-green-800';
+                                    if ($krs['tingkat_kerusakan'] === 'Ringan') {
+                                        $badgeColor = 'bg-yellow-100 text-yellow-800';
+                                    } elseif ($krs['tingkat_kerusakan'] === 'Sedang') {
+                                        $badgeColor = 'bg-orange-100 text-orange-800';
+                                    } elseif ($krs['tingkat_kerusakan'] === 'Parah') {
+                                        $badgeColor = 'bg-red-100 text-red-800';
+                                    }
+                                ?>
+                                <tr class="hover:bg-gray-50 transition">
+                                    <td class="px-6 py-4 text-gray-600 font-medium"><?= $krs['id_kondisi']; ?></td>
+                                    <td class="px-6 py-4 font-semibold text-gray-800">
+                                        <?= htmlspecialchars($krs['merk_mobil']); ?> (<?= htmlspecialchars($krs['plat_nomor']); ?>)
+                                    </td>
+                                    <td class="px-6 py-4 text-gray-700 max-w-xs truncate">
+                                        <?= htmlspecialchars($krs['deskripsi_kerusakan']); ?>
+                                    </td>
+                                    
+                                    <td class="px-6 py-4">
+                                        <span class="px-2.5 py-1 rounded-full font-bold text-[10px] <?= $badgeColor; ?>">
+                                            <?= htmlspecialchars($krs['tingkat_kerusakan']); ?>
+                                        </span>
+                                    </td>
+                                    
+                                    <td class="px-6 py-4 text-gray-600">
+                                        <?= htmlspecialchars($krs['tgl_dilaporkan']); ?>
+                                    </td>
+
+                                    <td class="px-6 py-4 font-bold text-red-600">
+                                        Rp <?= number_format($krs['estimasi_biaya'] ?? 0); ?>
+                                    </td>
+
+                                    <td class="px-6 py-4 text-gray-600">
+                                        <?= htmlspecialchars($krs['tgl_selesai'] ?? '-'); ?>
+                                    </td>
+
+                                    <td class="px-6 py-4">
+                                        <span class="px-2.5 py-1 rounded-full font-bold text-[10px] bg-blue-100 text-blue-800">
+                                            <?= htmlspecialchars($krs['status_mobil']); ?>
+                                        </span>
+                                    </td>
+
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center justify-center space-x-3">
+                                            <a href="index.php?page=home_lapangan&action=edit_kondisi&id=<?= $krs['id_kondisi']; ?>" class="text-blue-500 hover:text-blue-700 font-bold" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="index.php?page=home_lapangan&action=data_kerusakan&selesai_id=<?= $krs['id_kondisi']; ?>" 
+                                               onclick="return confirm('Apakah mobil sudah selesai melakukan perawatan?');" 
+                                               class="bg-green-600 hover:bg-green-700 text-white font-bold px-2.5 py-1 rounded-xl text-[10px] transition shadow" 
+                                               title="Selesai">
+                                                Selesai
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endforeach;
+                            else: ?>
+                                <tr>
+                                    <td colspan="9" class="px-6 py-10 text-center text-gray-400 italic font-medium">
+                                        Tidak ada data kondisi & kerusakan mobil yang tersedia saat ini.
+                                    </td>
+                                </tr>
+                            <?php endif;
                         } catch (PDOException $e) {
-                            echo "<tr><td colspan='5' class='px-6 py-10 text-center text-gray-400 italic'>Gagal mengambil data: " . htmlspecialchars($e->getMessage()) . "</td></tr>";
+                            echo "<tr><td colspan='9' class='px-6 py-10 text-center text-gray-400 italic'>Gagal mengambil data: " . htmlspecialchars($e->getMessage()) . "</td></tr>";
                         } ?>
                     </tbody>
                 </table>
             </div>
 
-        <?php elseif($action === 'edit_kondisi'): ?>
+        <?php elseif($action === 'edit_kondisi'): 
+            $id_kondisi = filter_var($_GET['id'] ?? 0, FILTER_VALIDATE_INT);
+            $stmtEva = $db->prepare("
+                SELECT k.*, m.merk_mobil, m.plat_nomor 
+                FROM kondisi_mobil k
+                JOIN mobil m ON k.id_mobil = m.id_mobil
+                WHERE k.id_kondisi = ?
+            ");
+            $stmtEva->execute([$id_kondisi]);
+            $evData = $stmtEva->fetch(PDO::FETCH_ASSOC);
+        ?>
     <!-- BUNGKUSAN UTAMA -->
     <div class="w-full max-w-3xl mx-auto bg-white p-6 rounded-2xl border shadow-sm space-y-4">
         <h3 class="font-bold text-gray-800 text-sm border-b pb-2">Formulir Penyelesaian & Estimasi Biaya Perbaikan</h3>

@@ -74,7 +74,7 @@ if (!empty($userName)) {
             <div class="space-y-1">
                 <a href="index.php?page=home_lapangan&action=data_kerusakan" 
                    class="flex items-center py-2 px-4 rounded-lg text-xs font-bold transition <?= $action === 'data_kerusakan' ? 'bg-white/10 text-white border-l-4 border-indigo-500' : 'text-slate-400 hover:bg-slate-800/60 hover:text-white' ?>">
-                    Data Mobil Rusak
+                    Data Kondisi Mobil
                 </a>
             </div>
         </div>

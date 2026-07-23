@@ -70,7 +70,7 @@ public function store()
 
                 // Menggunakan Named Parameter agar binding data LOB lebih rapi dan aman
                 $sql = "INSERT INTO penyewaan (kode_penyewaan, id_pelanggan, id_mobil, id_fasilitas, tgl_penyewaan, tgl_mulai_sewa, tgl_selesai_sewa, durasi_hari, total_harga, status_penyewaan, bukti_bayar) 
-                        VALUES (:kode_sewa, :id_pelanggan, :id_mobil, :id_fasilitas, NOW(), :tgl_mulai, :tgl_selesai, :durasi, :total_harga, 'Pending', :bukti_bayar)";
+                        VALUES (:kode_sewa, :id_pelanggan, :id_mobil, :id_fasilitas, NOW(), :tgl_mulai, :tgl_selesai, :durasi, :total_harga, 'Confirmed', :bukti_bayar)";
                 
                 $stmt = $this->db->prepare($sql);
                 

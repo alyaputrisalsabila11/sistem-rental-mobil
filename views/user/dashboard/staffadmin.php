@@ -1335,27 +1335,19 @@ try {
                                 <?php
                                 $stmtKerusakan = $db->query(
                                     "SELECT
-                        pg.id_pengembalian,
-                        pg.kondisi_mobil,
-                        pg.catatan,
-                        pg.biaya_kerusakan,
-                        jk.nama_kerusakan,
+                        k.id_kondisi AS id_pengembalian,
+                        k.tingkat_kerusakan AS kondisi_mobil,
+                        k.deskripsi_kerusakan AS catatan,
+                        k.deskripsi_kerusakan AS nama_kerusakan,
+                        k.estimasi_biaya AS biaya_kerusakan,
                         m.id_mobil,
                         m.merk_mobil,
                         m.plat_nomor,
                         m.status_mobil
-                    FROM pengembalian pg
-                    JOIN penyerahan pen
-                        ON pg.id_penyerahan = pen.id_penyerahan
-                    JOIN penyewaan p
-                        ON pen.id_penyewaan = p.id_penyewaan
+                    FROM kondisi_mobil k
                     JOIN mobil m
-                        ON p.id_mobil = m.id_mobil
-                    LEFT JOIN jenis_kerusakan jk
-                        ON pg.id_kerusakan = jk.id_kerusakan
-                    WHERE pg.id_kerusakan IS NOT NULL
-                    OR pg.biaya_kerusakan > 0
-                    ORDER BY pg.id_pengembalian DESC"
+                        ON k.id_mobil = m.id_mobil
+                    ORDER BY k.id_kondisi DESC"
                                 );
                                 $dataKerusakan = $stmtKerusakan->fetchAll(
                                     PDO::FETCH_ASSOC
